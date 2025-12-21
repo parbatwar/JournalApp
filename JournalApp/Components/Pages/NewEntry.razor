@@ -1,0 +1,176 @@
+﻿@page "/"
+@layout MainLayout
+
+<div class="page-header">
+    <h1>Create New Entry</h1>
+    <p>Write today’s journal</p>
+</div>
+
+<div class="card">
+
+    <div class="field">
+        <label>Title</label>
+        <input type="text"
+               placeholder="Enter journal title" />
+    </div>
+
+    <textarea class="content-box"
+              rows="6"
+              placeholder="Write your thoughts">
+    </textarea>
+
+    <div class="section">
+        <p class="section-title">Primary Mood</p>
+        <div class="moods">
+            <button>😊 Happy</button>
+            <button>😐 Neutral</button>
+            <button>😢 Sad</button>
+            <button>😰 Anxious</button>
+            <button>😌 Calm</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <p class="section-subtitle">Secondary mood (optional)</p>
+        <div class="moods">
+            <button>😊 Happy</button>
+            <button>😐 Neutral</button>
+            <button>😢 Sad</button>
+            <button>😰 Anxious</button>
+            <button>😌 Calm</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <p class="section-title">Tags</p>
+        <select class="select-box">
+            <option value="">Select a tag</option>
+            <option>Work</option>
+            <option>Personal</option>
+            <option>Health</option>
+            <option>Gratitude</option>
+            <option>Goals</option>
+            <option>Reflection</option>
+            <option>Ideas</option>
+            <option>Memories</option>
+        </select>
+
+        <input class="tag-input"
+               type="text"
+               placeholder="Add custom tag" />
+    </div>
+
+    <button class="create-btn">
+        Create Entry
+    </button>
+
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 32px;
+}
+.page-header h1 {
+    font-weight: 600;
+    color: var(--bs-body-emphasis);
+}
+.page-header p {
+    color: var(--bs-secondary-color);
+    font-size: 0.95rem;
+}
+
+.card {
+    background: var(--bs-body-bg);
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.field {
+    margin-bottom: 18px;
+}
+.field label {
+    font-weight: 500;
+    color: var(--bs-body-color);
+}
+.field input {
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.field input,
+.content-box,
+.select-box,
+.tag-input {
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-border-color);
+}
+
+.content-box {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 1rem;
+    resize: none;
+}
+
+.section {
+    margin-top: 22px;
+}
+.section-title {
+    font-weight: 600;
+    color: var(--bs-body-emphasis);
+    margin-bottom: 8px;
+}
+.section-subtitle {
+    font-size: 0.9rem;
+    color: var(--bs-secondary-color);
+    margin-bottom: 8px;
+}
+
+/* Mood buttons */
+.moods {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.moods button {
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--bs-border-color);
+    background: transparent;
+    color: var(--bs-body-color);
+    cursor: pointer;
+}
+.moods button:hover {
+    background: rgba(122,45,108,0.15);
+}
+
+/* tag */
+.select-box,
+.tag-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+/* button */
+.create-btn {
+    margin-top: 24px;
+    padding: 12px 28px;
+    background: linear-gradient(
+        180deg,
+        #4b1d63,
+        #7a2d6c
+    );
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+</style>
