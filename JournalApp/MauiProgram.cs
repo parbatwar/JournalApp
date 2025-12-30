@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace JournalApp
 {
@@ -15,13 +17,34 @@ namespace JournalApp
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddDbContext<AppDbContext>(options =>
+            {
+                var exePath = AppContext.BaseDirectory;
+                var dbPath = Path.Combine(exePath, "journal.db");
+
+                options.UseSqlite($"Data Source={dbPath}");
+            });
+
+
+
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.EnsureCreated();
+                Console.WriteLine("DB CREATED AT: " + FileSystem.AppDataDirectory);
+            }
+
+            return app;
+
         }
     }
 }
+

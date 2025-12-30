@@ -1,5 +1,8 @@
 ﻿@page "/"
 @layout MainLayout
+@using JournalApp.Components.Models
+@inject AppDbContext db
+
 
 <div class="page-header">
     <h1>Create New Entry</h1>
@@ -11,12 +14,14 @@
     <div class="field">
         <label>Title</label>
         <input type="text"
-               placeholder="Enter journal title" />
+               placeholder="Enter journal title"
+               @bind="entry.Title" />
     </div>
 
     <textarea class="content-box"
               rows="6"
-              placeholder="Write your thoughts">
+              placeholder="Write your thoughts"
+              @bind="entry.Content">
     </textarea>
 
     <div class="section">
@@ -60,7 +65,7 @@
                placeholder="Add custom tag" />
     </div>
 
-    <button class="create-btn">
+    <button class="create-btn" @onclick="SaveEntry">
         Create Entry
     </button>
 
@@ -174,3 +179,21 @@
     cursor: pointer;
 }
 </style>
+
+@code{
+    JournalEntry entry = new();
+
+    void SaveEntry()
+    {
+        if (!string.IsNullOrWhiteSpace(entry.Title))
+        {
+            entry.CreatedAt = DateTime.Now;
+            entry.UpdatedAt = DateTime.Now;
+
+            db.Entries.Add(entry);
+            db.SaveChanges();
+
+            entry = new(); // clear form
+        }
+    }
+}
