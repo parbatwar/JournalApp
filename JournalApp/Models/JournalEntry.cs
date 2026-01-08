@@ -14,6 +14,8 @@ namespace JournalApp.Models
         public int TagId { get; set; }
         public Tag? Tag { get; set; }
 
+        [Required(ErrorMessage = "Title is required")]
+        [StringLength(100, ErrorMessage = "Title too long")]
         public string Title { get; set; } = "";
         public string Content { get; set; } = "";
         public DateTime EntryDate { get; set; } = DateTime.UtcNow.Date;

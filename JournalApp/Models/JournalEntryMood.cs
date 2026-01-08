@@ -13,8 +13,10 @@ namespace JournalApp.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int JournalEntryMoodId { get; set; }
+        [Required]
         public int JournalId { get; set; }
         public JournalEntry? JournalEntry { get; set; }
+        [Required]
         public int MoodId { get; set; }
         public Mood? Mood { get; set; }
         [Required]

@@ -13,8 +13,11 @@ namespace JournalApp.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int TagId { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Tag name required")]
+        [StringLength(50)]
         public string TagName { get; set; } = "";
+
         [Required]
         public TagTypeEnum TagType { get; set; }
 

@@ -15,8 +15,11 @@ namespace JournalApp.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MoodId { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Mood name required")]
+        [StringLength(50)]
         public string MoodName { get; set; } = "";
+
         [Required]
         public MoodCategoryEnum MoodCategory { get; set; }
 
