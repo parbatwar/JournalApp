@@ -1,17 +1,25 @@
-﻿using SQLite;
-using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace JournalApp.Models
-{
+{   
+    public enum MoodRoleEnum
+    {
+        Primary,
+        Secondary
+    }
     public class JournalEntryMood
     {
-        [PrimaryKey, AutoIncrement]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int JournalEntryMoodId { get; set; }
         public int JournalId { get; set; }
+        public JournalEntry? JournalEntry { get; set; }
         public int MoodId { get; set; }
+        public Mood? Mood { get; set; }
         [Required]
-        public string MoodRole { get; set; } = "";
+        public MoodRoleEnum MoodRole { get; set; }
+
     }
 }
 

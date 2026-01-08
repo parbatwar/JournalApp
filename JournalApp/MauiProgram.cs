@@ -33,35 +33,29 @@ namespace JournalApp
             builder.Logging.AddDebug();
 #endif
 
-            var app = builder.Build();
-
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.Migrate();
-            }
-            return app;
-
-
-
-
             //var app = builder.Build();
 
             //using (var scope = app.Services.CreateScope())
             //{
-
             //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-            //    var realPath = Path.Combine(FileSystem.AppDataDirectory, "journal.db");
-
-            //    var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            //    File.WriteAllText(Path.Combine(desktop, "db_location.txt"), realPath);
-
-            //    db.Database.EnsureDeleted();
-            //    db.Database.EnsureCreated();
-
+            //    db.Database.Migrate();
             //}
             //return app;
+
+
+
+
+            var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.EnsureDeleted();
+                db.Database.EnsureCreated();
+
+            }
+            return app;
 
 
         }
