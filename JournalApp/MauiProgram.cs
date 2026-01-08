@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 
@@ -19,8 +20,7 @@ namespace JournalApp
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
-                var exePath = AppContext.BaseDirectory;
-                var dbPath = Path.Combine(exePath, "journal.db");
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "journal.db");
 
                 options.UseSqlite($"Data Source={dbPath}");
             });
@@ -38,11 +38,31 @@ namespace JournalApp
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.EnsureCreated();
-                Console.WriteLine("DB CREATED AT: " + FileSystem.AppDataDirectory);
+                db.Database.Migrate();
             }
-
             return app;
+
+
+
+
+            //var app = builder.Build();
+
+            //using (var scope = app.Services.CreateScope())
+            //{
+
+            //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            //    var realPath = Path.Combine(FileSystem.AppDataDirectory, "journal.db");
+
+            //    var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            //    File.WriteAllText(Path.Combine(desktop, "db_location.txt"), realPath);
+
+            //    db.Database.EnsureDeleted();
+            //    db.Database.EnsureCreated();
+
+            //}
+            //return app;
+
 
         }
     }
