@@ -1,108 +1,72 @@
 ﻿@page "/login"
 @layout EmptyLayout
+@using JournalApp.Models
+@inject AppDbContext Db
+@inject NavigationManager Nav
+@using Microsoft.EntityFrameworkCore
+@using JournalApp.Services
 
-<div class="login-bg">
-    <div class="login-card">
 
-        <div class="avatar">
-            <div class="avatar-icon">👤</div>
+@if (!string.IsNullOrEmpty(error))
+{
+    <p class="text-danger">@error</p>
+}
+
+
+<EditForm Model="login" OnValidSubmit="DoLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="login-bg">
+        <div class="login-card">
+
+            <div class="avatar">
+                <div class="avatar-icon">👤</div>
+            </div>
+
+            <div class="field">
+                <input class="login-input"
+                       type="email"
+                       placeholder="Email"
+                       @bind="login.Email" />
+            </div>
+
+            <div class="field">
+                <input class="login-input"
+                       type="password"
+                       placeholder="Password"
+                       @bind="login.Password" />
+            </div>
+
+            <button class="login-btn" type="submit">LOGIN</button>
+
+            <p class="mt-3">
+                No account?
+                <a href="/register">Create one</a>
+            </p>
+
         </div>
-
-        <div class="field">
-            <span class="icon">👤</span>
-            <input type="text" placeholder="Username" />
-        </div>
-
-        <div class="field">
-            <span class="icon">🔒</span>
-            <input type="password" placeholder="Password" />
-        </div>
-
-        <button class="login-btn">
-            LOGIN
-        </button>
-
     </div>
-</div>
 
-<style>
-.login-bg {
-    height: 100vh;
-    background: linear-gradient(
-        180deg,
-        #2a0f3c 0%,
-        #4b1d63 45%,
-        #7a2d6c 75%,
-        #b04478 100%
-    );
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+</EditForm>
 
-.login-card {
-    width: 380px;
-    padding: 40px 36px;
-    background: rgba(255,255,255,0.22);
-    backdrop-filter: blur(12px);
-    border-radius: 10px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
-}
 
-.avatar {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 36px;
-}
+@code {
+    AppUser login = new();
+    string error = "";
 
-.avatar-icon {
-    width: 80px;
-    height: 80px;
-    background: rgba(255,255,255,0.55);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 36px;
-}
+    async Task DoLogin()
+    {
+        var user = await Db.Users
+            .FirstOrDefaultAsync(u => u.Email == login.Email && u.Password == login.Password);
 
-.field {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(255,255,255,0.7);
-    padding: 14px 16px;
-    border-radius: 8px;
-    margin-bottom: 22px;
-}
+        if (user == null)
+        {
+            error = "Invalid email or password.";
+            return;
+        }
 
-.field input {
-    border: none;
-    outline: none;
-    background: transparent;
-    width: 100%;
-    font-size: 1rem;
+        Session.CurrentUser = user;
+        Nav.NavigateTo("/");
+    }
 }
-
-.icon {
-    font-size: 1.1rem;
-    opacity: 0.7;
-}
-
-.login-btn {
-    width: 100%;
-    margin-top: 16px;
-    padding: 14px;
-    border: none;
-    border-radius: 10px;
-    background: #e6a19a;
-    color: white;
-    font-weight: 600;
-    letter-spacing: 1px;
-    cursor: pointer;
-}
-
-.login-btn:hover {
-    background: #d68a83;
-}
-</style>
