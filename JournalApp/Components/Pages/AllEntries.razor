@@ -1,5 +1,8 @@
 ﻿@page "/all-entries"
 @layout MainLayout
+@inject Session Session
+@inject NavigationManager Nav
+
 
 <div class="page-header">
     <h1>All Entries</h1>
@@ -159,4 +162,14 @@
         public string Title { get; set; } = "";
         public DateTime CreatedAt { get; set; }
     }
+
+
+
+
+    protected override void OnInitialized()
+    {
+        if (Session.CurrentUser == null)
+            Nav.NavigateTo("/login");
+    }
+
 }

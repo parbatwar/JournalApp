@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JournalApp.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -25,6 +26,8 @@ namespace JournalApp
                 options.UseSqlite($"Data Source={dbPath}");
             });
 
+            builder.Services.AddScoped<Session>();
+            builder.Services.AddScoped<IUserService, UserService>();
 
 
 

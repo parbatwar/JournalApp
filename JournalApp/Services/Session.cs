@@ -1,8 +1,9 @@
 ﻿using JournalApp.Models;
 
-namespace JournalApp.Services;
-
-public static class Session
+namespace JournalApp.Services
 {
-    public static AppUser? CurrentUser { get; set; }
+    public class Session
+    {
+        public AppUser? CurrentUser { get; set; }
+    }
 }

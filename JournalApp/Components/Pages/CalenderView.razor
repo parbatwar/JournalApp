@@ -1,5 +1,7 @@
 ﻿@page "/calender-view"
 @layout MainLayout
+@inject Session Session
+@inject NavigationManager Nav
 
 <div class="page-header">
     <h1>Calendar</h1>
@@ -84,3 +86,11 @@
     opacity: 0.9;
 }
 </style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (Session.CurrentUser == null)
+            Nav.NavigateTo("/login");
+    }
+}
