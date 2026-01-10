@@ -4,6 +4,7 @@
 @using Microsoft.EntityFrameworkCore
 @inject Session Session
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 
 <div class="page-header">
@@ -11,18 +12,17 @@
     <p>Write your thoughts and feelings for today</p>
 </div>
 
-
 <div class="content-card">
+
     <!-- Title -->
     <div class="mb-4">
         <label for="entryTitle" class="form-label">Title</label>
         <input type="text" class="form-control" id="entryTitle" placeholder="Enter a suitable title">
     </div>
 
-    <!-- Content -->
     <div class="mb-5">
-        <label for="entryContent" class="form-label">Your Thoughts</label>
-        <textarea class="form-control" id="entryContent" placeholder="What's on your mind today?"></textarea>
+        <label class="form-label">Your Thoughts</label>
+        <div id="quillEditor" style="height:200px;background:white;"></div>
     </div>
 
     <!-- Primary Mood -->
@@ -71,29 +71,34 @@
         </div>
     </div>
 
-
     <!-- Action Button -->
     <div class="d-grid mt-4 mb-5">
-        <button type="button" class="btn create-btn">
+        <button type="button" class="btn create-btn" @onclick="SaveEntry">
             Create Entry 🚀
         </button>
+
     </div>
 </div>
 
-@* 
-@code
-JournalEntry entry = new() { UserId = 1 };
-List<Mood> moods = new();
-List<Tag> tags = new();
-int primaryMoodId;
-List<int> secondaryMoodIds = new();
-string error = ""; *@
-
 
 @code {
-    protected override void OnInitialized()
+
+    string title = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initQuill");
+        }
+
         if (Session.CurrentUser == null)
             Nav.NavigateTo("/login");
+    }
+
+    async Task SaveEntry()
+    {
+        // Quill ko formatted HTML content lina
+        var htmlContent = await JS.InvokeAsync<string>("getQuillHtml");
     }
 }
