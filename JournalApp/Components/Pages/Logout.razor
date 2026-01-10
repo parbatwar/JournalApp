@@ -1,0 +1,14 @@
+﻿@inject Session Session
+@inject NavigationManager Nav
+
+<button class="btn btn-danger" @onclick="DoLogout">
+    Logout
+</button>
+
+@code {
+    void DoLogout()
+    {
+        Session.Logout();            // clear session
+        Nav.NavigateTo("/login", true);   // redirect to login
+    }
+}

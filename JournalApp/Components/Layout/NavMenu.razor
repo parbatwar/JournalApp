@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject Session Session
+@inject NavigationManager Nav
+
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Daily Journal</a>
     </div>
@@ -6,8 +10,8 @@
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+<div class="nav-scrollable flex-fill d-flex" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column flex-fill">
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
@@ -33,11 +37,22 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="/login">
-                Login Page
-            </NavLink>
+        <div class="nav-item px-3 mt-auto pt-3">
+            <button class="logout-link"
+                    @onclick="Logout">
+                Logout
+            </button>
         </div>
+
 
     </nav>
 </div>
+
+
+@code {
+    void Logout()
+    {
+        Session.CurrentUser = null;
+        Nav.NavigateTo("/login", true);
+    }
+}

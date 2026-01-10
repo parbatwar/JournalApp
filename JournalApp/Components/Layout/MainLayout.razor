@@ -1,18 +1,22 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<div class="d-flex" style="height:100vh">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar d-flex flex-column" style="width:260px; flex-shrink:0;">
         <NavMenu />
     </div>
 
-    <main>
+    <!-- MAIN CONTENT -->
+    <div class="flex-fill d-flex flex-column">
+
         <div class="top-row px-4 d-flex align-items-center justify-content-end gap-3">
-            <button class="btn btn-sm btn-outline-secondary">
-            </button>
+            <button class="btn btn-sm btn-outline-secondary"></button>
         </div>
 
-        <article class="content px-4">
+        <article class="content px-4 flex-fill overflow-auto">
             @Body
         </article>
-    </main>
+
+    </div>
 </div>
