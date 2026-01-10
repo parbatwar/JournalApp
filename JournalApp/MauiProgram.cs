@@ -28,6 +28,7 @@ namespace JournalApp
 
             builder.Services.AddScoped<Session>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IEntryService, EntryService>();
 
 
 
@@ -52,7 +53,7 @@ namespace JournalApp
             {
 
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                //db.Database.EnsureDeleted();
+                db.Database.EnsureDeleted();
                 db.Database.EnsureCreated();
 
             }

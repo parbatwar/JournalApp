@@ -2,9 +2,12 @@
 @layout MainLayout
 @using JournalApp.Models
 @using Microsoft.EntityFrameworkCore
+@using JournalApp.Services
+@inject AppDbContext Db
 @inject Session Session
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject IEntryService EntryService
 
 
 <div class="page-header">
@@ -29,12 +32,14 @@
     <div class="mb-4">
         <p class="section-title">Primary Mood</p>
         <div class="d-flex flex-wrap gap-2">
-            <button type="button" class="btn mood-btn" data-mood="happy">😊 Happy</button>
-            <button type="button" class="btn mood-btn" data-mood="neutral">😐 Neutral</button>
-            <button type="button" class="btn mood-btn" data-mood="sad">😢 Sad</button>
-            <button type="button" class="btn mood-btn" data-mood="anxious">😰 Anxious</button>
-            <button type="button" class="btn mood-btn" data-mood="calm">😌 Calm</button>
-            <button type="button" class="btn mood-btn" data-mood="excited">🤩 Excited</button>
+            @foreach (var mood in moods)
+            {
+                <button type="button"
+                        class="btn btn-outline-dark"
+                        @onclick="() => primaryMoodId = mood.MoodId">
+                    @mood.MoodName
+                </button>
+            }
         </div>
     </div>
 
@@ -42,31 +47,39 @@
     <div class="mb-5">
         <p class="section-subtitle">Secondary mood (optional)</p>
         <div class="d-flex flex-wrap gap-2">
-            <button type="button" class="btn mood-btn" data-mood-secondary="happy">😊 Happy</button>
-            <button type="button" class="btn mood-btn" data-mood-secondary="neutral">😐 Neutral</button>
-            <button type="button" class="btn mood-btn" data-mood-secondary="sad">😢 Sad</button>
-            <button type="button" class="btn mood-btn" data-mood-secondary="anxious">😰 Anxious</button>
-            <button type="button" class="btn mood-btn" data-mood-secondary="calm">😌 Calm</button>
-            <button type="button" class="btn mood-btn" data-mood-secondary="excited">🤩 Excited</button>
+            @foreach (var mood in moods)
+            {
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        @onclick="() => secondaryMoodId = mood.MoodId">
+                    @mood.MoodName
+                </button>
+            }
         </div>
     </div>
+
 
     <!-- Tags -->
     <div class="mb-4">
         <p class="section-title">Tags</p>
+
         <div class="row">
             <div class="col">
-                <label for="tagSelect" class="form-label">Select from presets</label>
-                <select class="form-select p-2" aria-label="Default select example">
-                    <option selected>Open this select menu</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
+                <label class="form-label">Select from presets</label>
+                <select class="form-select" @bind="selectedTagId">
+                    <option value="0">Choose...</option>
+                    @foreach (var tag in tags)
+                    {
+                        <option value="@tag.TagId">@tag.TagName</option>
+                    }
                 </select>
             </div>
-            <div class="col mb-4">
-                <label for="exampleFormControlInput1" class="form-label">Or create custom tag</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="Type and press Enter">
+
+            <div class="col">
+                <label class="form-label">Or create custom tag</label>
+                <input class="form-control"
+                       placeholder="Type tag name"
+                       @bind="customTagName" />
             </div>
         </div>
     </div>
@@ -82,8 +95,32 @@
 
 
 @code {
-
+    // form fields
     string title = "";
+    int primaryMoodId = 0;
+    int secondaryMoodId = 0;
+    int selectedTagId = 0;
+    string customTagName = "";
+
+    // loaded from DB once
+    List<Mood> moods = new();
+    List<Tag> tags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // login guard (fast)
+        if (Session.CurrentUser == null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        // load once
+        moods = await Db.Moods.AsNoTracking().ToListAsync();
+        tags = await Db.Tags.AsNoTracking()
+            .Where(t => t.TagType == TagTypeEnum.Predefined)
+            .ToListAsync();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -91,14 +128,14 @@
         {
             await JS.InvokeVoidAsync("initQuill");
         }
-
-        if (Session.CurrentUser == null)
-            Nav.NavigateTo("/login");
     }
 
     async Task SaveEntry()
     {
-        // Quill ko formatted HTML content lina
         var htmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+
+        // for now: just check you got values
+        await JS.InvokeVoidAsync("console.log", $"Title={title}, Primary={primaryMoodId}, Secondary={secondaryMoodId}, TagId={selectedTagId}");
+        await JS.InvokeVoidAsync("console.log", htmlContent);
     }
 }
