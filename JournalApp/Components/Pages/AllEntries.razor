@@ -29,19 +29,25 @@
 
             @foreach (var entry in PagedEntries)
             {
-                <tr>
+                <tr style="cursor:pointer"
+                    @onclick="() => OpenEntry(entry.JournalId)">
+
                     <td>@i</td>
                     <td>@entry.Title</td>
+
                     <td>
                         @(entry.EntryMoods.Any()
                                             ? entry.EntryMoods.First().Mood?.MoodName
                                             : "Not set")
                     </td>
+
                     <td>@entry.Tag?.TagName</td>
                     <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
                 </tr>
+
                 i++;
             }
+
         </tbody>
     </table>
 
@@ -128,4 +134,11 @@
             LoadPage();
         }
     }
+
+    void OpenEntry(int entryId)
+    {
+        // Navigate to entry detail page with id
+        Nav.NavigateTo($"/entry/{entryId}");
+    }
+
 }

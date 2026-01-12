@@ -127,26 +127,50 @@
 
     async Task SaveEntry()
     {
-        // basic validation
+        // Title validation
         if (string.IsNullOrWhiteSpace(title))
         {
-            await JS.InvokeVoidAsync("alert", "Title required ❗");
+            var mainPage = Application.Current!.Windows[0].Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync(
+                    "Alert",
+                    "Title is required",
+                    "OK"
+                );
+            }
             return;
         }
 
         if (primaryMoodId == 0)
         {
-            await JS.InvokeVoidAsync("alert", "Select primary mood ❗");
+            var mainPage = Application.Current!.Windows[0].Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync(
+                    "Alert",
+                    "Please select a primary mood",
+                    "OK"
+                );
+            }
             return;
         }
 
         if (selectedTagId == 0)
         {
-            await JS.InvokeVoidAsync("alert", "Select category ❗");
+            var mainPage = Application.Current!.Windows[0].Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync(
+                    "Alert",
+                    "Please select a category",
+                    "OK"
+                );
+            }
             return;
         }
 
-        // ❗ check: one entry per date per user
+        // One entry per date check
         bool exists = await Db.Entries.AnyAsync(e =>
             e.UserId == Session.CurrentUser!.UserId &&
             e.EntryDate == entryDate
@@ -154,14 +178,19 @@
 
         if (exists)
         {
-            await JS.InvokeVoidAsync(
-                "alert",
-                "You already have an entry for this date ❗"
-            );
+            var mainPage = Application.Current!.Windows[0].Page;
+            if (mainPage != null)
+            {
+                await mainPage.DisplayAlertAsync(
+                    "Duplicate Entry",
+                    "You already have an entry for this date",
+                    "OK"
+                );
+            }
             return;
         }
 
-        // get editor content
+        // Get editor content
         var content = await JS.InvokeAsync<string>("getQuillHtml");
 
         var entry = new JournalEntry
@@ -181,7 +210,18 @@
             secondaryMoodId == 0 ? null : secondaryMoodId
         );
 
-        await JS.InvokeVoidAsync("alert", "Entry saved ✅");
+        // ✅ SUCCESS ALERT (slide jastai)
+        var mainPageSuccess = Application.Current!.Windows[0].Page;
+        if (mainPageSuccess != null)
+        {
+            await mainPageSuccess.DisplayAlertAsync(
+                "Success",
+                "Journal entry created successfully",
+                "OK"
+            );
+        }
+
         Nav.NavigateTo("/all-entries");
     }
+
 }

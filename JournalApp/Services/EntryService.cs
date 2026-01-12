@@ -54,5 +54,26 @@ namespace JournalApp.Services
                         .ToListAsync();
                 }
 
+        public async Task<JournalEntry?> GetEntryById(int journalId)
+        {
+            // single journal entry with moods & tag
+            return await _db.Entries
+                .Include(e => e.EntryMoods)
+                    .ThenInclude(em => em.Mood)
+                .Include(e => e.Tag)
+                .FirstOrDefaultAsync(e => e.JournalId == journalId);
+        }
+
+        public async Task DeleteEntry(int journalId)
+        {
+            var entry = await _db.Entries
+                .FirstAsync(e => e.JournalId == journalId); // assumes always exists
+
+            _db.Entries.Remove(entry);
+            await _db.SaveChangesAsync();
+        }
+
+
+
     }
 }

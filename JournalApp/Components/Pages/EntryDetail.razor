@@ -1,0 +1,96 @@
+﻿@page "/entry/{EntryId:int}"
+
+@layout MainLayout
+@using JournalApp.Models
+@inject IEntryService EntryService
+@inject NavigationManager Nav
+
+
+<div class="page-header">
+    <h1>Journal Entry</h1>
+    <p>View your journal entry</p>
+</div>
+
+<div class="card p-4">
+
+    <h3>@Entry.Title</h3>
+
+    <p class="text-muted">
+        @Entry.EntryDate.ToString("yyyy-MM-dd")
+    </p>
+
+    <hr />
+
+    <div>
+        @((MarkupString)Entry.Content)
+    </div>
+
+    <hr />
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-primary"
+                @onclick="EditEntry">
+            Edit
+        </button>
+
+        <button class="btn btn-danger"
+                @onclick="DeleteEntry">
+            Delete
+        </button>
+    </div>
+
+</div>
+
+
+@code {
+    [Parameter]
+    public int EntryId { get; set; }
+    bool ShowDeleteConfirm = false;
+    JournalEntry? Entry;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load single entry by id
+        Entry = await EntryService.GetEntryById(EntryId);
+
+
+        // if (Entry == null)
+        // {
+        //     Nav.NavigateTo("/all-entries");
+        // }
+    }
+
+    void EditEntry()
+    {
+        // Navigate to edit page
+        Nav.NavigateTo($"/edit-entry/{EntryId}");
+    }
+
+    async Task DeleteEntry()
+    {
+        bool confirm = await Application.Current!.Windows[0].Page!
+            .DisplayAlertAsync(
+                "Confirm",
+                "Are you sure you want to delete?",
+                "Yes",
+                "No"
+            );
+
+        if (!confirm)
+            return; // No click garyo bhane yahi stop
+
+        // ✅ Yes click garyo bhane yaha aauncha
+        await EntryService.DeleteEntry(EntryId);
+
+        await Application.Current!.Windows[0].Page!
+            .DisplayAlertAsync(
+                "Deleted",
+                "Journal entry deleted",
+                "OK"
+            );
+
+        Nav.NavigateTo("/all-entries");
+    }
+
+
+}

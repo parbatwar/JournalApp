@@ -1,16 +1,18 @@
 ﻿.page-header {
-    margin-bottom: 32px;
+    padding: 2rem 0;
 }
 
-.page-header h1 {
-    font-weight: 600;
-    color: var(--bs-body-emphasis);
-}
+    .page-header h1 {
+        font-size: 1.7rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
 
-.page-header p {
-    color: #6b7280;
-    color: var(--bs-secondary-color);
-}
+    .page-header p {
+        color: #6b7280;
+        font-size: .95rem;
+    }
+
 
 .card {
     background: var(--bs-card-bg);
