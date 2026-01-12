@@ -13,7 +13,8 @@ namespace JournalApp.Services
 
         Task<List<JournalEntry>> GetEntries(int userId);
 
-        Task<JournalEntry?> GetEntryById(int entryId);
+        Task<JournalEntry> GetEntryById(int entryId);
+
         Task DeleteEntry(int entryId);
     }
 }

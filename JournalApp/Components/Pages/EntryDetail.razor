@@ -1,32 +1,70 @@
 ﻿@page "/entry/{EntryId:int}"
-
 @layout MainLayout
+
 @using JournalApp.Models
 @inject IEntryService EntryService
 @inject NavigationManager Nav
-
 
 <div class="page-header">
     <h1>Journal Entry</h1>
     <p>View your journal entry</p>
 </div>
 
-<div class="card p-4">
+<div class="card p-4 mb-4">
 
+    <!-- Title -->
     <h3>@Entry.Title</h3>
 
+    <!-- Entry Date -->
     <p class="text-muted">
         @Entry.EntryDate.ToString("yyyy-MM-dd")
     </p>
 
     <hr />
 
+    <!-- Content -->
     <div>
         @((MarkupString)Entry.Content)
     </div>
 
     <hr />
 
+    <!-- Mood -->
+    <!-- Mood -->
+    <p class="fw-bold">Mood</p>
+    <div>
+        @string.Join(", ",
+                Entry.EntryMoods
+                .OrderBy(m => m.MoodRole)
+                .Select(m => m.Mood!.MoodName)
+                )
+    </div>
+
+
+    <hr />
+
+    <!-- Tag / Category -->
+    <p class="fw-bold">Category</p>
+    <div>
+        @Entry.Tag?.TagName
+    </div>
+
+    <hr />
+
+    <!-- Created / Updated -->
+    <p>
+        <strong>Created:</strong>
+        @Entry.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+    </p>
+
+    <p>
+        <strong>Updated:</strong>
+        @Entry.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
+    </p>
+
+    <hr />
+
+    <!-- Actions -->
     <div class="d-flex gap-2">
         <button class="btn btn-primary"
                 @onclick="EditEntry">
@@ -41,28 +79,19 @@
 
 </div>
 
-
 @code {
     [Parameter]
     public int EntryId { get; set; }
-    bool ShowDeleteConfirm = false;
-    JournalEntry? Entry;
+
+    JournalEntry Entry = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        // Load single entry by id
         Entry = await EntryService.GetEntryById(EntryId);
-
-
-        // if (Entry == null)
-        // {
-        //     Nav.NavigateTo("/all-entries");
-        // }
     }
 
     void EditEntry()
     {
-        // Navigate to edit page
         Nav.NavigateTo($"/edit-entry/{EntryId}");
     }
 
@@ -77,20 +106,17 @@
             );
 
         if (!confirm)
-            return; // No click garyo bhane yahi stop
+            return;
 
-        // ✅ Yes click garyo bhane yaha aauncha
         await EntryService.DeleteEntry(EntryId);
 
         await Application.Current!.Windows[0].Page!
             .DisplayAlertAsync(
                 "Deleted",
-                "Journal entry deleted",
+                "Journal entry deleted successfully",
                 "OK"
             );
 
         Nav.NavigateTo("/all-entries");
     }
-
-
 }

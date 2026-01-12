@@ -54,15 +54,12 @@ namespace JournalApp.Services
                         .ToListAsync();
                 }
 
-        public async Task<JournalEntry?> GetEntryById(int journalId)
+        public async Task<JournalEntry> GetEntryById(int entryId)
         {
-            // single journal entry with moods & tag
             return await _db.Entries
-                .Include(e => e.EntryMoods)
-                    .ThenInclude(em => em.Mood)
-                .Include(e => e.Tag)
-                .FirstOrDefaultAsync(e => e.JournalId == journalId);
+                .FirstAsync(e => e.JournalId == entryId);
         }
+
 
         public async Task DeleteEntry(int journalId)
         {
