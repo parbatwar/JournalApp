@@ -44,12 +44,15 @@ namespace JournalApp.Services
 
         // logged-in user ko sabai entries
         public async Task<List<JournalEntry>> GetEntries(int userId)
-        {
-            return await _db.Entries
-                .Where(e => e.UserId == userId)
-                .OrderByDescending(e => e.CreatedAt)
-                .AsNoTracking()
-                .ToListAsync();
-        }
+                {
+                    return await _db.Entries
+                        .Include(e => e.EntryMoods)
+                            .ThenInclude(em => em.Mood)   // 🔥 THIS WAS MISSING
+                        .Include(e => e.Tag)
+                        .Where(e => e.UserId == userId)
+                        .OrderByDescending(e => e.EntryDate)
+                        .ToListAsync();
+                }
+
     }
 }

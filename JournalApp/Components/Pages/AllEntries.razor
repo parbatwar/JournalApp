@@ -11,12 +11,13 @@
 </div>
 
 <div class="card">
-
     <table class="table">
         <thead>
             <tr>
-                <th>#</th>
+                <th>S.No.</th>
                 <th>Title</th>
+                <th>Mood</th>
+                <th>Category</th>
                 <th>Date</th>
             </tr>
         </thead>
@@ -24,18 +25,30 @@
             @{
                 int i = 1;
             }
+
             @foreach (var entry in Entries)
             {
                 <tr>
                     <td>@i</td>
                     <td>@entry.Title</td>
+
+                    <td>
+                        @(entry.EntryMoods.Any()
+                                            ? entry.EntryMoods.First().Mood?.MoodName
+                                            : "Not set")
+                    </td>
+
+
+                    <!-- Category -->
+                    <td>@entry.Tag?.TagName</td>
+
+                    <!-- Date -->
                     <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
                 </tr>
                 i++;
             }
         </tbody>
     </table>
-
 </div>
 
 @code {
@@ -49,8 +62,6 @@
             return;
         }
 
-        Entries = await EntryService.GetEntries(
-            Session.CurrentUser.UserId
-        );
+        Entries = await EntryService.GetEntries(Session.CurrentUser.UserId);
     }
 }

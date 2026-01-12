@@ -15,6 +15,7 @@ namespace JournalApp.Models
         public int JournalEntryMoodId { get; set; }
         [Required]
         public int JournalId { get; set; }
+        [ForeignKey(nameof(JournalId))]
         public JournalEntry? JournalEntry { get; set; }
         [Required]
         public int MoodId { get; set; }
