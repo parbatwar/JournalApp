@@ -1,0 +1,166 @@
+﻿@page "/edit-entry/{EntryId:int}"
+@layout MainLayout
+
+@using JournalApp.Models
+@using Microsoft.EntityFrameworkCore
+@inject AppDbContext Db
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject IEntryService EntryService
+
+<div class="page-header">
+    <h1>Edit Journal Entry</h1>
+    <p>Update your thoughts and feelings</p>
+</div>
+
+<div class="content-card mb-4">
+
+    <!-- Entry Date -->
+    <div class="mb-4 col-md-4">
+        <label class="form-label">Entry Date</label>
+        <input type="date"
+               class="form-control"
+               @bind="entryDate" />
+    </div>
+
+    <!-- Title -->
+    <div class="mb-4">
+        <label class="form-label">Title</label>
+        <input type="text"
+               class="form-control"
+               @bind="title" />
+    </div>
+
+    <!-- Content -->
+    <div class="mb-5">
+        <label class="form-label">Your Thoughts</label>
+        <div id="quillEditor" style="height:200px;background:white;"></div>
+    </div>
+
+    <!-- Primary Mood -->
+    <div class="mb-4">
+        <p class="section-title">Primary Mood</p>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var mood in moods)
+            {
+                <button type="button"
+                        class="btn @(primaryMoodId == mood.MoodId ? "btn-dark" : "btn-outline-dark")"
+                        @onclick="() => primaryMoodId = mood.MoodId">
+                    @mood.MoodName
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Secondary Mood -->
+    <div class="mb-4">
+        <p class="section-subtitle">Secondary Mood (optional)</p>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var mood in moods)
+            {
+                <button type="button"
+                        class="btn @(secondaryMoodId == mood.MoodId ? "btn-secondary" : "btn-outline-secondary")"
+                        @onclick="() => secondaryMoodId = mood.MoodId">
+                    @mood.MoodName
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Category -->
+    <div class="mb-4">
+        <label class="form-label">Category</label>
+        <select class="form-select" @bind="selectedTagId">
+            @foreach (var tag in tags)
+            {
+                <option value="@tag.TagId">@tag.TagName</option>
+            }
+        </select>
+    </div>
+
+    <!-- Update Button -->
+    <div class="d-grid mt-4">
+        <button class="btn create-btn" @onclick="UpdateEntry">
+            Update Entry
+        </button>
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter] public int EntryId { get; set; }
+
+    JournalEntry Entry = null!;
+
+    string title = "";
+    DateTime entryDate;
+    int primaryMoodId;
+    int secondaryMoodId;
+    int selectedTagId;
+
+    List<Mood> moods = new();
+    List<Tag> tags = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Entry = await EntryService.GetEntryById(EntryId);
+
+        moods = await Db.Moods.ToListAsync();
+        tags = await Db.Tags
+            .Where(t => t.TagType == TagTypeEnum.Predefined)
+            .ToListAsync();
+
+        // preload values
+        title = Entry.Title;
+        entryDate = Entry.EntryDate;
+        selectedTagId = Entry.TagId;
+
+        primaryMoodId = Entry.EntryMoods
+            .First(m => m.MoodRole == MoodRoleEnum.Primary)
+            .MoodId;
+
+        secondaryMoodId = Entry.EntryMoods
+            .Where(m => m.MoodRole == MoodRoleEnum.Secondary)
+            .Select(m => m.MoodId)
+            .FirstOrDefault();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initQuill");
+            await JS.InvokeVoidAsync("setQuillHtml", Entry.Content);
+        }
+    }
+
+    async Task UpdateEntry()
+    {
+        var content = await JS.InvokeAsync<string>("getQuillHtml");
+
+        Entry.Title = title;
+        Entry.Content = content;
+        Entry.EntryDate = entryDate;
+        Entry.TagId = selectedTagId;
+        Entry.UpdatedAt = DateTime.Now;
+
+        await EntryService.UpdateEntry(
+            Entry,
+            primaryMoodId,
+            secondaryMoodId == 0 ? null : secondaryMoodId
+        );
+
+        var page = Application.Current!.Windows[0].Page;
+        if (page != null)
+        {
+            await page.DisplayAlertAsync(
+                "Updated",
+                "Journal entry updated successfully",
+                "OK"
+            );
+        }
+
+        Nav.NavigateTo($"/entry/{EntryId}");
+    }
+}

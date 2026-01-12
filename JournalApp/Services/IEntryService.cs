@@ -16,5 +16,12 @@ namespace JournalApp.Services
         Task<JournalEntry> GetEntryById(int entryId);
 
         Task DeleteEntry(int entryId);
+
+        Task UpdateEntry(
+            JournalEntry entry,
+            int primaryMoodId,
+            int? secondaryMoodId
+        );
+
     }
 }

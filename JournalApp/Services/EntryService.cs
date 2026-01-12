@@ -70,6 +70,37 @@ namespace JournalApp.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task UpdateEntry(
+            JournalEntry entry,
+            int primaryMoodId,
+            int? secondaryMoodId)
+        {
+            _db.Entries.Update(entry);
+
+            var moods = _db.EntryMood
+                .Where(m => m.JournalId == entry.JournalId);
+
+            _db.EntryMood.RemoveRange(moods);
+
+            _db.EntryMood.Add(new JournalEntryMood
+            {
+                JournalId = entry.JournalId,
+                MoodId = primaryMoodId,
+                MoodRole = MoodRoleEnum.Primary
+            });
+
+            if (secondaryMoodId != null)
+            {
+                _db.EntryMood.Add(new JournalEntryMood
+                {
+                    JournalId = entry.JournalId,
+                    MoodId = secondaryMoodId.Value,
+                    MoodRole = MoodRoleEnum.Secondary
+                });
+            }
+
+            await _db.SaveChangesAsync();
+        }
 
 
     }

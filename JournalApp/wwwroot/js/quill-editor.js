@@ -10,3 +10,7 @@ window.getQuillHtml = function () {
     // Editor bhitra ko HTML content return garne
     return quill.root.innerHTML;
 };
+
+window.setQuillHtml = function (html) {
+    quill.root.innerHTML = html;
+};
