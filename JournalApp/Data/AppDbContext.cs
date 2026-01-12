@@ -39,6 +39,17 @@ namespace JournalApp
                 new Tag { TagId = 4, TagName = "Goals", TagType = TagTypeEnum.Predefined },
                 new Tag { TagId = 5, TagName = "Birthday", TagType = TagTypeEnum.Predefined }
             );
+
+
+            modelBuilder.Entity<AppUser>().HasData(
+                new AppUser
+                {
+                    UserId = 1,
+                    Name = "Parbat",
+                    Email = "parbat@123.com",
+                    Password = "parbat"
+                }
+            );
         }
     }
 }

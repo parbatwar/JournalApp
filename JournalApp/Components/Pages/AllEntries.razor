@@ -11,6 +11,7 @@
 </div>
 
 <div class="card">
+
     <table class="table">
         <thead>
             <tr>
@@ -23,36 +24,67 @@
         </thead>
         <tbody>
             @{
-                int i = 1;
+                int i = (CurrentPage - 1) * PageSize + 1;
             }
 
-            @foreach (var entry in Entries)
+            @foreach (var entry in PagedEntries)
             {
                 <tr>
                     <td>@i</td>
                     <td>@entry.Title</td>
-
                     <td>
                         @(entry.EntryMoods.Any()
                                             ? entry.EntryMoods.First().Mood?.MoodName
                                             : "Not set")
                     </td>
-
-
-                    <!-- Category -->
                     <td>@entry.Tag?.TagName</td>
-
-                    <!-- Date -->
                     <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
                 </tr>
                 i++;
             }
         </tbody>
     </table>
+
+    <!-- SIMPLE BOOTSTRAP PAGINATION -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-end">
+
+            <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link"
+                   href="#"
+                   @onclick="PrevPage"
+                   @onclick:preventDefault>
+                    Previous
+                </a>
+            </li>
+
+            <li class="page-item active">
+                <a class="page-link">
+                    @CurrentPage
+                </a>
+            </li>
+
+            <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   href="#"
+                   @onclick="NextPage"
+                   @onclick:preventDefault>
+                    Next
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+
 </div>
 
 @code {
     List<JournalEntry> Entries = new();
+    List<JournalEntry> PagedEntries = new();
+
+    int CurrentPage = 1;
+    int PageSize = 5;
+    int TotalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,5 +95,37 @@
         }
 
         Entries = await EntryService.GetEntries(Session.CurrentUser.UserId);
+
+        TotalPages = (int)Math.Ceiling(
+            (double)Entries.Count / PageSize
+        );
+
+        LoadPage();
+    }
+
+    void LoadPage()
+    {
+        PagedEntries = Entries
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    void NextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+            LoadPage();
+        }
+    }
+
+    void PrevPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            LoadPage();
+        }
     }
 }
