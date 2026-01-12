@@ -1,8 +1,9 @@
 ﻿@page "/all-entries"
 @layout MainLayout
+@using JournalApp.Models
 @inject Session Session
 @inject NavigationManager Nav
-
+@inject IEntryService EntryService
 
 <div class="page-header">
     <h1>All Entries</h1>
@@ -11,165 +12,45 @@
 
 <div class="card">
 
-    <div class="table-wrapper">
-        <table class="entries-table">
-            <thead>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int i = 1;
+            }
+            @foreach (var entry in Entries)
+            {
                 <tr>
-                    <th>S.No.</th>
-                    <th>Title</th>
-                    <th>Created At</th>
+                    <td>@i</td>
+                    <td>@entry.Title</td>
+                    <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
                 </tr>
-            </thead>
-
-            <tbody>
-                @{
-                    int i = (CurrentPage - 1) * PageSize + 1;
-                }
-                @foreach (var entry in PagedEntries)
-                {
-                    <tr>
-                        <td>@i</td>
-                        <td>@entry.Title</td>
-                        <td>@entry.CreatedAt.ToString("yyyy-MM-dd")</td>
-                    </tr>
-                    i++;
-                }
-            </tbody>
-        </table>
-    </div>
-
-    <nav class="mt-3">
-        <ul class="pagination justify-content-end">
-            <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
-                <button class="page-link" @onclick="PrevPage">Previous</button>
-            </li>
-
-            <li class="page-item active">
-                <span class="page-link">@CurrentPage</span>
-            </li>
-
-            <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
-                <button class="page-link" @onclick="NextPage">Next</button>
-            </li>
-        </ul>
-    </nav>
+                i++;
+            }
+        </tbody>
+    </table>
 
 </div>
 
-<style>
-.page-header {
-    margin-bottom: 32px;
-}
-.page-header h1 {
-    font-weight: 600;
-    color: var(--bs-body-emphasis);
-}
-.page-header p {
-    color: #6b7280;
-    color: var(--bs-secondary-color);
-}
-.card {
-    background: var(--bs-card-bg);
-    padding: 28px;
-    border-radius: 16px;
-}
-
-.table-wrapper {
-    min-height: 360px;
-}
-.entries-table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-}
-.entries-table th {
-    text-align: left;
-    padding: 12px;
-    color: var(--bs-body-emphasis);
-    font-weight: 600;
-    border-bottom: 2px solid #f1e7f3;
-    height: 48px; 
-}
-.entries-table td {
-    padding: 12px;
-    border-bottom: 1px solid #f3e8f5;
-    color: var(--bs-body-color);
-    height: 48px; 
-}
-.entries-table tr:last-child td {
-    border-bottom: none;
-}
-
-.pagination {
-    gap: 6px;
-}
-
-.page-link {
-    min-width: 90px;            
-    text-align: center;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--bs-border-color);
-    color: var(--bs-body-color);
-    background: transparent;
-    font-weight: 500;
-}
-.page-item.active .page-link {
-    background: transparent;
-    color: var(--bs-body-color);
-    border: 1px solid var(--bs-border-color);
-}
-</style>
-
 @code {
-    private int PageSize = 6;
-    private int CurrentPage = 1;
+    List<JournalEntry> Entries = new();
 
-    private List<JournalEntry> entries = new()
-    {
-        new JournalEntry { Title = "Morning Reflection", CreatedAt = DateTime.Today.AddDays(-1) },
-        new JournalEntry { Title = "Work Thoughts", CreatedAt = DateTime.Today.AddDays(-2) },
-        new JournalEntry { Title = "Gratitude Note", CreatedAt = DateTime.Today.AddDays(-3) },
-        new JournalEntry { Title = "Daily Goals", CreatedAt = DateTime.Today.AddDays(-4) },
-        new JournalEntry { Title = "Personal Journal", CreatedAt = DateTime.Today.AddDays(-5) },
-        new JournalEntry { Title = "Morning Reflection", CreatedAt = DateTime.Today.AddDays(-6) },
-        new JournalEntry { Title = "Work Thoughts", CreatedAt = DateTime.Today.AddDays(-7) },
-        new JournalEntry { Title = "Gratitude Note", CreatedAt = DateTime.Today.AddDays(-8) }
-    };
-
-    private IEnumerable<JournalEntry> PagedEntries =>
-        entries
-            .Skip((CurrentPage - 1) * PageSize)
-            .Take(PageSize);
-
-    private int TotalPages =>
-        (int)Math.Ceiling(entries.Count / (double)PageSize);
-
-    private void NextPage()
-    {
-        if (CurrentPage < TotalPages)
-            CurrentPage++;
-    }
-
-    private void PrevPage()
-    {
-        if (CurrentPage > 1)
-            CurrentPage--;
-    }
-
-    public class JournalEntry
-    {
-        public string Title { get; set; } = "";
-        public DateTime CreatedAt { get; set; }
-    }
-
-
-
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Session.CurrentUser == null)
+        {
             Nav.NavigateTo("/login");
-    }
+            return;
+        }
 
+        Entries = await EntryService.GetEntries(
+            Session.CurrentUser.UserId
+        );
+    }
 }

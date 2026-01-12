@@ -4,6 +4,13 @@ namespace JournalApp.Services
 {
     public interface IEntryService
     {
-        Task AddEntryAsync(JournalEntry entry);
+        Task AddEntry(
+            JournalEntry entry,
+            int primaryMoodId,
+            int? secondaryMoodId
+        );
+
+
+        Task<List<JournalEntry>> GetEntries(int userId);
     }
 }

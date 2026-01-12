@@ -20,7 +20,12 @@
     <!-- Title -->
     <div class="mb-4">
         <label for="entryTitle" class="form-label">Title</label>
-        <input type="text" class="form-control" id="entryTitle" placeholder="Enter a suitable title">
+        <input 
+            type="text" 
+            class="form-control" 
+            id="entryTitle" 
+            placeholder="Enter a suitable title"
+            @bind = "title">
     </div>
 
     <div class="mb-5">
@@ -35,7 +40,7 @@
             @foreach (var mood in moods)
             {
                 <button type="button"
-                        class="btn btn-outline-dark"
+                        class="btn @(primaryMoodId == mood.MoodId ? "btn-dark" : "btn-outline-dark")"
                         @onclick="() => primaryMoodId = mood.MoodId">
                     @mood.MoodName
                 </button>
@@ -50,7 +55,7 @@
             @foreach (var mood in moods)
             {
                 <button type="button"
-                        class="btn btn-outline-secondary"
+                        class="btn @(secondaryMoodId == mood.MoodId ? "btn-secondary" : "btn-outline-secondary")"
                         @onclick="() => secondaryMoodId = mood.MoodId">
                     @mood.MoodName
                 </button>
@@ -75,12 +80,12 @@
                 </select>
             </div>
 
-            <div class="col">
+            @* <div class="col">
                 <label class="form-label">Or create custom tag</label>
                 <input class="form-control"
                        placeholder="Type tag name"
                        @bind="customTagName" />
-            </div>
+            </div> *@
         </div>
     </div>
 
@@ -100,7 +105,6 @@
     int primaryMoodId = 0;
     int secondaryMoodId = 0;
     int selectedTagId = 0;
-    string customTagName = "";
 
     // loaded from DB once
     List<Mood> moods = new();
@@ -132,10 +136,47 @@
 
     async Task SaveEntry()
     {
-        var htmlContent = await JS.InvokeAsync<string>("getQuillHtml");
+        // basic validation
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            await JS.InvokeVoidAsync("alert", "Title required ❗");
+            return;
+        }
 
-        // for now: just check you got values
-        await JS.InvokeVoidAsync("console.log", $"Title={title}, Primary={primaryMoodId}, Secondary={secondaryMoodId}, TagId={selectedTagId}");
-        await JS.InvokeVoidAsync("console.log", htmlContent);
+        if (primaryMoodId == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "Select primary mood ❗");
+            return;
+        }
+
+        if (selectedTagId == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "Select a tag ❗");
+            return;
+        }
+
+        // get editor content
+        var content = await JS.InvokeAsync<string>("getQuillHtml");
+
+        // save journal entry
+        var entry = new JournalEntry
+        {
+            Title = title,
+            Content = content,
+            UserId = Session.CurrentUser!.UserId,
+            TagId = selectedTagId,
+            EntryDate = DateTime.Today,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
+        await EntryService.AddEntry(
+        entry,
+        primaryMoodId,
+        secondaryMoodId == 0 ? null : secondaryMoodId
+    );
+
+        await JS.InvokeVoidAsync("alert", "Entry saved ✅");
+        Nav.NavigateTo("/");
     }
 }
