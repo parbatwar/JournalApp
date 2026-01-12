@@ -9,7 +9,6 @@
 @inject IJSRuntime JS
 @inject IEntryService EntryService
 
-
 <div class="page-header">
     <h1>New Journal Entry</h1>
     <p>Write your thoughts and feelings for today</p>
@@ -17,17 +16,24 @@
 
 <div class="content-card">
 
-    <!-- Title -->
-    <div class="mb-4">
-        <label for="entryTitle" class="form-label">Title</label>
-        <input 
-            type="text" 
-            class="form-control" 
-            id="entryTitle" 
-            placeholder="Enter a suitable title"
-            @bind = "title">
+    <!-- Entry Date -->
+    <div class="mb-4 col-md-4">
+        <label class="form-label">Entry Date</label>
+        <input type="date"
+               class="form-control"
+               @bind="entryDate" />
     </div>
 
+    <!-- Title -->
+    <div class="mb-4">
+        <label class="form-label">Title</label>
+        <input type="text"
+               class="form-control"
+               placeholder="Enter title"
+               @bind="title" />
+    </div>
+
+    <!-- Content -->
     <div class="mb-5">
         <label class="form-label">Your Thoughts</label>
         <div id="quillEditor" style="height:200px;background:white;"></div>
@@ -49,8 +55,8 @@
     </div>
 
     <!-- Secondary Mood -->
-    <div class="mb-5">
-        <p class="section-subtitle">Secondary mood (optional)</p>
+    <div class="mb-4">
+        <p class="section-subtitle">Secondary Mood (optional)</p>
         <div class="d-flex flex-wrap gap-2">
             @foreach (var mood in moods)
             {
@@ -63,67 +69,52 @@
         </div>
     </div>
 
-
-    <!-- Tags -->
+    <!-- Tag -->
     <div class="mb-4">
-        <p class="section-title">Tags</p>
-
-        <div class="row">
-            <div class="col">
-                <label class="form-label">Select from presets</label>
-                <select class="form-select" @bind="selectedTagId">
-                    <option value="0">Choose...</option>
-                    @foreach (var tag in tags)
-                    {
-                        <option value="@tag.TagId">@tag.TagName</option>
-                    }
-                </select>
-            </div>
-
-            @* <div class="col">
-                <label class="form-label">Or create custom tag</label>
-                <input class="form-control"
-                       placeholder="Type tag name"
-                       @bind="customTagName" />
-            </div> *@
-        </div>
+        <label class="form-label">Category</label>
+        <select class="form-select" @bind="selectedTagId">
+            <option value="0">Choose...</option>
+            @foreach (var tag in tags)
+            {
+                <option value="@tag.TagId">@tag.TagName</option>
+            }
+        </select>
     </div>
 
-    <!-- Action Button -->
-    <div class="d-grid mt-4 mb-5">
-        <button type="button" class="btn create-btn" @onclick="SaveEntry">
+    <!-- Save Button -->
+    <div class="d-grid mt-4 mb-4">
+        <button class="btn create-btn" @onclick="SaveEntry">
             Create Entry 🚀
         </button>
-
     </div>
+
 </div>
 
-
 @code {
+
     // form fields
     string title = "";
+    DateTime entryDate = DateTime.Today;
     int primaryMoodId = 0;
     int secondaryMoodId = 0;
     int selectedTagId = 0;
 
-    // loaded from DB once
+    // data
     List<Mood> moods = new();
     List<Tag> tags = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // login guard (fast)
         if (Session.CurrentUser == null)
         {
             Nav.NavigateTo("/login");
             return;
         }
 
-        // load once
         moods = await Db.Moods.AsNoTracking().ToListAsync();
         tags = await Db.Tags.AsNoTracking()
-            .Where(t => t.TagType == TagTypeEnum.Predefined)
-            .ToListAsync();
+                            .Where(t => t.TagType == TagTypeEnum.Predefined)
+                            .ToListAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -151,32 +142,46 @@
 
         if (selectedTagId == 0)
         {
-            await JS.InvokeVoidAsync("alert", "Select a tag ❗");
+            await JS.InvokeVoidAsync("alert", "Select category ❗");
+            return;
+        }
+
+        // ❗ check: one entry per date per user
+        bool exists = await Db.Entries.AnyAsync(e =>
+            e.UserId == Session.CurrentUser!.UserId &&
+            e.EntryDate == entryDate
+        );
+
+        if (exists)
+        {
+            await JS.InvokeVoidAsync(
+                "alert",
+                "You already have an entry for this date ❗"
+            );
             return;
         }
 
         // get editor content
         var content = await JS.InvokeAsync<string>("getQuillHtml");
 
-        // save journal entry
         var entry = new JournalEntry
         {
             Title = title,
             Content = content,
             UserId = Session.CurrentUser!.UserId,
             TagId = selectedTagId,
-            EntryDate = DateTime.Today,
+            EntryDate = entryDate,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now
         };
 
         await EntryService.AddEntry(
-        entry,
-        primaryMoodId,
-        secondaryMoodId == 0 ? null : secondaryMoodId
-    );
+            entry,
+            primaryMoodId,
+            secondaryMoodId == 0 ? null : secondaryMoodId
+        );
 
         await JS.InvokeVoidAsync("alert", "Entry saved ✅");
-        Nav.NavigateTo("/");
+        Nav.NavigateTo("/all-entries");
     }
 }
