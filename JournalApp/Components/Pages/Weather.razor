@@ -1,6 +1,5 @@
 ﻿@page "/weather"
 @layout MainLayout
-@inject Session Session
 @inject NavigationManager Nav
 
 <h1>Weather</h1>
@@ -60,12 +59,6 @@ else
         public int TemperatureC { get; set; }
         public string? Summary { get; set; }
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-    }
-
-    protected override void OnInitialized()
-    {
-        if (Session.CurrentUser == null)
-            Nav.NavigateTo("/login");
     }
 
 }

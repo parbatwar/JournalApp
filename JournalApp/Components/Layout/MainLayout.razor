@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
+
 
 <div class="d-flex" style="height:100vh">
 
@@ -11,8 +13,13 @@
     <div class="flex-fill d-flex flex-column">
 
         <div class="top-row px-4 d-flex align-items-center justify-content-end gap-3">
-            <button class="btn btn-sm btn-outline-secondary"></button>
+            <button class="btn btn-outline-secondary btn-sm"
+                    @onclick="ToggleTheme">
+                Toggle Theme
+            </button>
+
         </div>
+
 
         <article class="content px-4 flex-fill overflow-auto">
             @Body
@@ -20,3 +27,11 @@
 
     </div>
 </div>
+
+
+@code {
+    async Task ToggleTheme()
+    {
+        await JS.InvokeVoidAsync("toggleTheme");
+    }
+}

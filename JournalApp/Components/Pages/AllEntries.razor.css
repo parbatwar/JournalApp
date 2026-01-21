@@ -5,11 +5,11 @@
     .page-header h1 {
         font-size: 1.7rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--bs-body-color);
     }
 
     .page-header p {
-        color: #6b7280;
+        color: var(--bs-secondary-color);
         font-size: .95rem;
     }
 

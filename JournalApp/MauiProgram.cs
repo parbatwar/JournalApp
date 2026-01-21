@@ -1,8 +1,9 @@
-﻿using JournalApp.Services;
+﻿using JournalApp.Repositories.EntryRepositories;
+using JournalApp.Repositories.UserRepository;
+using JournalApp.Services.EntryService;
+using JournalApp.Services.UserService;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace JournalApp
 {
@@ -26,9 +27,13 @@ namespace JournalApp
                 options.UseSqlite($"Data Source={dbPath}");
             });
 
-            builder.Services.AddScoped<Session>();
+            // User (Login / Signup)
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IUserService, UserService>();
+
+            builder.Services.AddScoped<IEntryRepository, EntryRepository>();
             builder.Services.AddScoped<IEntryService, EntryService>();
+
 
 
 

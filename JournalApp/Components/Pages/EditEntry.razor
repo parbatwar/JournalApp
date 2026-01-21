@@ -2,8 +2,7 @@
 @layout MainLayout
 
 @using JournalApp.Models
-@using Microsoft.EntityFrameworkCore
-@inject AppDbContext Db
+@using JournalApp.Services.EntryService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject IEntryService EntryService
@@ -44,7 +43,7 @@
             @foreach (var mood in moods)
             {
                 <button type="button"
-                        class="btn @(primaryMoodId == mood.MoodId ? "btn-dark" : "btn-outline-dark")"
+                        class="btn @(primaryMoodId == mood.MoodId ? "btn-primary" : "btn-outline-secondary")"
                         @onclick="() => primaryMoodId = mood.MoodId">
                     @mood.MoodName
                 </button>
@@ -91,36 +90,42 @@
 
     [Parameter] public int EntryId { get; set; }
 
-    JournalEntry Entry = null!;
-
+    // form fields
     string title = "";
+    string content = "";
     DateTime entryDate;
     int primaryMoodId;
     int secondaryMoodId;
     int selectedTagId;
 
+    // data
     List<Mood> moods = new();
     List<Tag> tags = new();
 
     protected override async Task OnInitializedAsync()
     {
-        Entry = await EntryService.GetEntryById(EntryId);
+        var entry = await EntryService.GetEntryById(EntryId);
 
-        moods = await Db.Moods.ToListAsync();
-        tags = await Db.Tags
-            .Where(t => t.TagType == TagTypeEnum.Predefined)
-            .ToListAsync();
+        if (entry == null)
+        {
+            Nav.NavigateTo("/all-entries");
+            return;
+        }
 
-        // preload values
-        title = Entry.Title;
-        entryDate = Entry.EntryDate;
-        selectedTagId = Entry.TagId;
+        moods = await EntryService.GetMoods();
+        tags = await EntryService.GetTags();
 
-        primaryMoodId = Entry.EntryMoods
+        // preload
+        title = entry.Title;
+        content = entry.Content;
+        entryDate = entry.EntryDate;
+        selectedTagId = entry.TagId;
+
+        primaryMoodId = entry.EntryMoods
             .First(m => m.MoodRole == MoodRoleEnum.Primary)
             .MoodId;
 
-        secondaryMoodId = Entry.EntryMoods
+        secondaryMoodId = entry.EntryMoods
             .Where(m => m.MoodRole == MoodRoleEnum.Secondary)
             .Select(m => m.MoodId)
             .FirstOrDefault();
@@ -131,36 +136,41 @@
         if (firstRender)
         {
             await JS.InvokeVoidAsync("initQuill");
-            await JS.InvokeVoidAsync("setQuillHtml", Entry.Content);
+            await JS.InvokeVoidAsync("setQuillHtml", content);
         }
     }
 
     async Task UpdateEntry()
     {
-        var content = await JS.InvokeAsync<string>("getQuillHtml");
+        var updatedContent = await JS.InvokeAsync<string>("getQuillHtml");
 
-        Entry.Title = title;
-        Entry.Content = content;
-        Entry.EntryDate = entryDate;
-        Entry.TagId = selectedTagId;
-        Entry.UpdatedAt = DateTime.Now;
+        var dto = new EntryDto
+        {
+            JournalId = EntryId,
+            Title = title,
+            Content = updatedContent,
+            EntryDate = entryDate,
+            TagId = selectedTagId,
+            PrimaryMoodId = primaryMoodId,
+            SecondaryMoodId = secondaryMoodId == 0 ? null : secondaryMoodId
+        };
 
-        await EntryService.UpdateEntry(
-            Entry,
-            primaryMoodId,
-            secondaryMoodId == 0 ? null : secondaryMoodId
+        await EntryService.UpdateEntry(dto);
+
+        await ShowAlert(
+            "Updated",
+            "Journal entry updated successfully"
         );
 
+        Nav.NavigateTo($"/entry/{EntryId}");
+    }
+
+    async Task ShowAlert(string title, string message)
+    {
         var page = Application.Current!.Windows[0].Page;
         if (page != null)
         {
-            await page.DisplayAlertAsync(
-                "Updated",
-                "Journal entry updated successfully",
-                "OK"
-            );
+            await page.DisplayAlertAsync(title, message, "OK");
         }
-
-        Nav.NavigateTo($"/entry/{EntryId}");
     }
 }

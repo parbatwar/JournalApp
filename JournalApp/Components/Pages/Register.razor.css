@@ -33,7 +33,7 @@
 }
 
 .field {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
     .field input {
@@ -41,7 +41,6 @@
         padding: 12px 14px;
         border-radius: 14px;
         border: 0;
-        background: rgba(255,255,255,.85);
     }
 
 .register-btn {

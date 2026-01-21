@@ -1,7 +1,9 @@
 ﻿@page "/all-entries"
 @layout MainLayout
+
 @using JournalApp.Models
-@inject Session Session
+@using JournalApp.Services.EntryService
+
 @inject NavigationManager Nav
 @inject IEntryService EntryService
 
@@ -10,8 +12,69 @@
     <p>View your journal history</p>
 </div>
 
-<div class="card">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 
+<!-- SEARCH + FILTER BAR -->
+<div class="container mb-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="d-flex gap-2 align-items-center">
+
+                <!-- Search -->
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+
+                    <input class="form-control"
+                           placeholder="Search title or content..."
+                           value="@searchText"
+                           @oninput="e =>
+                           {
+                               searchText = e.Value?.ToString() ?? string.Empty;
+                               OnFilterChanged();
+                           }" />
+                </div>
+
+                <!-- Mood filter -->
+                <select class="form-select w-auto"
+                        value="@selectedMood"
+                        @onchange="e =>
+                        {
+                            selectedMood = e.Value?.ToString() ?? string.Empty;
+                            OnFilterChanged();
+                        }">
+                    <option value="">All Moods</option>
+
+                    @foreach (var mood in AllMoods)
+                    {
+                        <option value="@mood.MoodName">@mood.MoodName</option>
+                    }
+                </select>
+
+                <!-- Tag filter -->
+                <select class="form-select w-auto"
+                        value="@selectedTag"
+                        @onchange="e =>
+                        {
+                            selectedTag = e.Value?.ToString() ?? string.Empty;
+                            OnFilterChanged();
+                        }">
+                    <option value="">All Categories</option>
+
+                    @foreach (var tag in AllTags)
+                    {
+                        <option value="@tag.TagName">@tag.TagName</option>
+                    }
+                </select>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABLE -->
+<div class="card">
     <table class="table">
         <thead>
             <tr>
@@ -36,9 +99,11 @@
                     <td>@entry.Title</td>
 
                     <td>
-                        @(entry.EntryMoods.Any()
-                                            ? entry.EntryMoods.First().Mood?.MoodName
-                                            : "Not set")
+                        @string.Join(", ",
+                            entry.EntryMoods
+                                 .OrderBy(m => m.MoodRole)
+                                 .Select(m => m.Mood!.MoodName)
+                        )
                     </td>
 
                     <td>@entry.Tag?.TagName</td>
@@ -47,17 +112,15 @@
 
                 i++;
             }
-
         </tbody>
     </table>
 
-    <!-- SIMPLE BOOTSTRAP PAGINATION -->
-    <nav aria-label="Page navigation">
+    <!-- PAGINATION -->
+    <nav>
         <ul class="pagination justify-content-end">
 
             <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
-                <a class="page-link"
-                   href="#"
+                <a class="page-link" href="#"
                    @onclick="PrevPage"
                    @onclick:preventDefault>
                     Previous
@@ -65,14 +128,11 @@
             </li>
 
             <li class="page-item active">
-                <a class="page-link">
-                    @CurrentPage
-                </a>
+                <span class="page-link">@CurrentPage</span>
             </li>
 
             <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
-                <a class="page-link"
-                   href="#"
+                <a class="page-link" href="#"
                    @onclick="NextPage"
                    @onclick:preventDefault>
                     Next
@@ -81,40 +141,87 @@
 
         </ul>
     </nav>
-
 </div>
 
 @code {
+
+    // =========================
+    // DATA
+    // =========================
     List<JournalEntry> Entries = new();
     List<JournalEntry> PagedEntries = new();
 
+    List<Mood> AllMoods = new();
+    List<Tag> AllTags = new();
+
+    // =========================
+    // SEARCH + FILTER
+    // =========================
+    string searchText = "";
+    string selectedMood = "";
+    string selectedTag = "";
+
+    // =========================
+    // PAGINATION
+    // =========================
     int CurrentPage = 1;
     int PageSize = 5;
     int TotalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        if (Session.CurrentUser == null)
-        {
-            Nav.NavigateTo("/login");
-            return;
-        }
+        // single-user app → service le user internally handle garcha
+        Entries = await EntryService.GetEntries();
 
-        Entries = await EntryService.GetEntries(Session.CurrentUser.UserId);
+        // distinct moods
+        AllMoods = Entries
+            .SelectMany(e => e.EntryMoods)
+            .Select(em => em.Mood!)
+            .DistinctBy(m => m.MoodId)
+            .ToList();
 
-        TotalPages = (int)Math.Ceiling(
-            (double)Entries.Count / PageSize
-        );
+        // distinct tags
+        AllTags = Entries
+            .Where(e => e.Tag != null)
+            .Select(e => e.Tag!)
+            .DistinctBy(t => t.TagId)
+            .ToList();
 
-        LoadPage();
+        ApplyFilters();
     }
 
-    void LoadPage()
+    IEnumerable<JournalEntry> FilteredEntries =>
+        Entries.Where(e =>
+            (string.IsNullOrWhiteSpace(searchText) ||
+             e.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             e.Content.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            &&
+            (string.IsNullOrEmpty(selectedMood) ||
+             e.EntryMoods.Any(m => m.Mood!.MoodName == selectedMood))
+            &&
+            (string.IsNullOrEmpty(selectedTag) ||
+             e.Tag!.TagName == selectedTag)
+        );
+
+    void ApplyFilters()
     {
-        PagedEntries = Entries
+        var list = FilteredEntries.ToList();
+
+        TotalPages = Math.Max(1,
+            (int)Math.Ceiling((double)list.Count / PageSize));
+
+        CurrentPage = Math.Min(CurrentPage, TotalPages);
+
+        PagedEntries = list
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize)
             .ToList();
+    }
+
+    void OnFilterChanged()
+    {
+        CurrentPage = 1;
+        ApplyFilters();
     }
 
     void NextPage()
@@ -122,7 +229,7 @@
         if (CurrentPage < TotalPages)
         {
             CurrentPage++;
-            LoadPage();
+            ApplyFilters();
         }
     }
 
@@ -131,14 +238,12 @@
         if (CurrentPage > 1)
         {
             CurrentPage--;
-            LoadPage();
+            ApplyFilters();
         }
     }
 
     void OpenEntry(int entryId)
     {
-        // Navigate to entry detail page with id
         Nav.NavigateTo($"/entry/{entryId}");
     }
-
 }

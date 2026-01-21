@@ -1,17 +1,6 @@
 ﻿@page "/dashboard"
 @layout MainLayout
-@inject Session Session
 @inject NavigationManager Nav
 
 <h3>Under Construction</h3>
-<p>Sorry, the content you are looking for is ubder development.</p>
-
-
-
-@code {
-    protected override void OnInitialized()
-    {
-        if (Session.CurrentUser == null)
-            Nav.NavigateTo("/login");
-    }
-}
+<p>Sorry, the content you are looking for is under development.</p>

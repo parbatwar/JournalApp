@@ -1,10 +1,10 @@
 ﻿@page "/register"
 @layout EmptyLayout
-@using JournalApp.FormModels
-@using JournalApp.Models
-@using JournalApp.Services
+
+@using JournalApp.Services.UserService
 @inject IUserService UserService
 @inject NavigationManager Nav
+
 
 <EditForm Model="user" OnValidSubmit="DoRegister">
     <DataAnnotationsValidator />
@@ -13,21 +13,19 @@
     <div class="register-bg">
         <div class="register-card">
 
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <p class="text-danger text-center mb-3">@error</p>
+            }
+
             <div class="avatar">
                 <div class="avatar-icon">👤</div>
             </div>
 
             <div class="field">
                 <InputText class="form-control"
-                           placeholder="Name"
-                           @bind-Value="user.Name" />
-            </div>
-
-            <div class="field">
-                <InputText class="form-control"
-                           type="email"
-                           placeholder="Email"
-                           @bind-Value="user.Email" />
+                           placeholder="Username"
+                           @bind-Value="user.Username" />
             </div>
 
             <div class="field">
@@ -37,11 +35,12 @@
                            @bind-Value="user.Password" />
             </div>
 
-            <button class="register-btn mt-3 mb-3" type="submit">
+            <button class="register-btn mb-3" type="submit">
                 REGISTER
             </button>
 
-            <NavLink href="/login" class="mt-3 text-center text-decoration-none text-white">
+            <NavLink href="/"
+                     class="mt-3 text-center text-decoration-none text-white">
                 Already have account?
             </NavLink>
 
@@ -50,18 +49,19 @@
 </EditForm>
 
 @code {
-    RegisterModel user = new();
+    UserDto user = new();   // DTO = form model
+    string error = "";
 
-    async Task DoRegister()
+    void DoRegister()
     {
-        var entity = new AppUser
+        try
         {
-            Name = user.Name,
-            Email = user.Email,
-            Password = user.Password
-        };
-
-        await UserService.RegisterAsync(entity);
-        Nav.NavigateTo("/login");
+            UserService.SignUp(user);   // signup
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message; // "User already exists"
+        }
     }
 }

@@ -1,13 +1,15 @@
-﻿@page "/"
+﻿@page "/add-entry"
 @layout MainLayout
+
 @using JournalApp.Models
-@using Microsoft.EntityFrameworkCore
-@using JournalApp.Services
-@inject AppDbContext Db
-@inject Session Session
+@using JournalApp.Services.EntryService
+
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@using JournalApp.Services.EntryService
 @inject IEntryService EntryService
+
+
 
 <div class="page-header">
     <h1>New Journal Entry</h1>
@@ -46,7 +48,7 @@
             @foreach (var mood in moods)
             {
                 <button type="button"
-                        class="btn @(primaryMoodId == mood.MoodId ? "btn-dark" : "btn-outline-dark")"
+                        class="btn @(primaryMoodId == mood.MoodId ? "btn-primary" : "btn-outline-secondary")"
                         @onclick="() => primaryMoodId = mood.MoodId">
                     @mood.MoodName
                 </button>
@@ -69,7 +71,7 @@
         </div>
     </div>
 
-    <!-- Tag -->
+    <!-- Category -->
     <div class="mb-4">
         <label class="form-label">Category</label>
         <select class="form-select" @bind="selectedTagId">
@@ -92,29 +94,26 @@
 
 @code {
 
-    // form fields
+    // =========================
+    // Form fields
+    // =========================
     string title = "";
     DateTime entryDate = DateTime.Today;
     int primaryMoodId = 0;
     int secondaryMoodId = 0;
     int selectedTagId = 0;
 
-    // data
+    // =========================
+    // Data lists
+    // =========================
     List<Mood> moods = new();
     List<Tag> tags = new();
 
     protected override async Task OnInitializedAsync()
     {
-        if (Session.CurrentUser == null)
-        {
-            Nav.NavigateTo("/login");
-            return;
-        }
-
-        moods = await Db.Moods.AsNoTracking().ToListAsync();
-        tags = await Db.Tags.AsNoTracking()
-                            .Where(t => t.TagType == TagTypeEnum.Predefined)
-                            .ToListAsync();
+        // Load moods & tags from service (read-only)
+        moods = await EntryService.GetMoods();
+        tags = await EntryService.GetTags();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -127,101 +126,57 @@
 
     async Task SaveEntry()
     {
-        // Title validation
+        // -------------------------
+        // Validations
+        // -------------------------
         if (string.IsNullOrWhiteSpace(title))
         {
-            var mainPage = Application.Current!.Windows[0].Page;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync(
-                    "Alert",
-                    "Title is required",
-                    "OK"
-                );
-            }
+            await ShowAlert("Alert", "Title is required");
             return;
         }
 
         if (primaryMoodId == 0)
         {
-            var mainPage = Application.Current!.Windows[0].Page;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync(
-                    "Alert",
-                    "Please select a primary mood",
-                    "OK"
-                );
-            }
+            await ShowAlert("Alert", "Please select a primary mood");
             return;
         }
 
         if (selectedTagId == 0)
         {
-            var mainPage = Application.Current!.Windows[0].Page;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync(
-                    "Alert",
-                    "Please select a category",
-                    "OK"
-                );
-            }
+            await ShowAlert("Alert", "Please select a category");
             return;
         }
 
-        // One entry per date check
-        bool exists = await Db.Entries.AnyAsync(e =>
-            e.UserId == Session.CurrentUser!.UserId &&
-            e.EntryDate == entryDate
-        );
-
-        if (exists)
-        {
-            var mainPage = Application.Current!.Windows[0].Page;
-            if (mainPage != null)
-            {
-                await mainPage.DisplayAlertAsync(
-                    "Duplicate Entry",
-                    "You already have an entry for this date",
-                    "OK"
-                );
-            }
-            return;
-        }
-
-        // Get editor content
+        // -------------------------
+        // Get content from Quill
+        // -------------------------
         var content = await JS.InvokeAsync<string>("getQuillHtml");
 
-        var entry = new JournalEntry
+        // -------------------------
+        // DTO mapping
+        // -------------------------
+        var dto = new EntryDto
         {
             Title = title,
             Content = content,
-            UserId = Session.CurrentUser!.UserId,
-            TagId = selectedTagId,
             EntryDate = entryDate,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            TagId = selectedTagId,
+            PrimaryMoodId = primaryMoodId,
+            SecondaryMoodId = secondaryMoodId == 0 ? null : secondaryMoodId
         };
 
-        await EntryService.AddEntry(
-            entry,
-            primaryMoodId,
-            secondaryMoodId == 0 ? null : secondaryMoodId
-        );
+        await EntryService.AddEntry(dto);
 
-        // ✅ SUCCESS ALERT (slide jastai)
-        var mainPageSuccess = Application.Current!.Windows[0].Page;
-        if (mainPageSuccess != null)
-        {
-            await mainPageSuccess.DisplayAlertAsync(
-                "Success",
-                "Journal entry created successfully",
-                "OK"
-            );
-        }
-
+        await ShowAlert("Success", "Journal entry created successfully");
         Nav.NavigateTo("/all-entries");
     }
 
+    async Task ShowAlert(string title, string message)
+    {
+        var page = Application.Current!.Windows[0].Page;
+        if (page != null)
+        {
+            await page.DisplayAlertAsync(title, message, "OK");
+        }
+    }
 }
