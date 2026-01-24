@@ -7,15 +7,14 @@ namespace JournalApp.Data
     {
         public static async Task SeedEntriesAsync(AppDbContext db)
         {
-            // -----------------------------
-            // 1️⃣ DEMO USER create (if none)
-            // -----------------------------
+
+            // DEMO USER create (if none)
             if (!await db.Users.AnyAsync())
             {
                 var demoUser = new AppUser
                 {
                     Username = "demo",
-                    Password = "123" // ⚠️ testing only
+                    Password = "123"
                 };
 
                 db.Users.Add(demoUser);
@@ -25,9 +24,8 @@ namespace JournalApp.Data
             // now safe to fetch user
             var user = await db.Users.FirstAsync();
 
-            // --------------------------------
-            // 2️⃣ If entries already exist → stop
-            // --------------------------------
+
+            // If entries already exist
             if (await db.Entries.AnyAsync())
                 return;
 
@@ -59,9 +57,7 @@ namespace JournalApp.Data
             var moods = await db.Moods.ToListAsync();
             var tags = await db.Tags.ToListAsync();
 
-            // -----------------------------
-            // 3️⃣ Create 10 demo entries
-            // -----------------------------
+            // Create 10 demo entries
             for (int i = 0; i < 10; i++)
             {
                 var entry = new JournalEntry
@@ -88,7 +84,7 @@ namespace JournalApp.Data
                     MoodRole = MoodRoleEnum.Primary
                 });
 
-                // secondary mood (50% chance)
+                // secondary mood
                 if (random.Next(2) == 1)
                 {
                     var secondaryMood = moods[random.Next(moods.Count)];
