@@ -1,33 +1,31 @@
 ﻿@inherits LayoutComponentBase
 @inject IJSRuntime JS
 
-
-<div class="d-flex" style="height:100vh">
+<div class="app-shell">
 
     <!-- SIDEBAR -->
-    <div class="sidebar d-flex flex-column" style="width:260px; flex-shrink:0;">
+    <aside class="app-sidebar">
         <NavMenu />
-    </div>
+    </aside>
 
-    <!-- MAIN CONTENT -->
-    <div class="flex-fill d-flex flex-column">
+    <!-- MAIN -->
+    <div class="app-main">
 
-        <div class="top-row px-4 d-flex align-items-center justify-content-end gap-3">
-            <button class="btn btn-outline-secondary btn-sm"
+        <!-- TOP BAR -->
+        <header class="app-topbar">
+            <button class="btn btn-sm btn-outline-secondary"
                     @onclick="ToggleTheme">
-                Toggle Theme
+                🌗
             </button>
+        </header>
 
-        </div>
-
-
-        <article class="content px-4 flex-fill overflow-auto">
+        <!-- CONTENT -->
+        <main class="app-content">
             @Body
-        </article>
+        </main>
 
     </div>
 </div>
-
 
 @code {
     async Task ToggleTheme()
