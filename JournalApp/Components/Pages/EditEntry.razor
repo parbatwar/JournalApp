@@ -15,6 +15,16 @@
 
 <div class="content-card mb-4">
 
+    <!-- Entry Date (TOP) -->
+    <div class="mb-4">
+        <label class="form-label">Entry Date</label>
+        <p class="form-control-plaintext fw-semibold">
+            @(Entry?.EntryDate.ToString("yyyy-MM-dd") ?? "")
+        </p>
+    </div>
+
+
+
     <!-- Title -->
     <div class="mb-4">
         <label class="form-label">Title</label>
@@ -91,6 +101,8 @@
     int primaryMoodId;
     int secondaryMoodId;
     int selectedTagId;
+    DateTime entryDate;
+
 
     List<Mood> moods = new();
     List<Tag> tags = new();
@@ -112,6 +124,8 @@
         // preload form
         title = Entry.Title;
         selectedTagId = Entry.TagId;
+        entryDate = Entry.EntryDate;
+
 
         primaryMoodId = Entry.EntryMoods
             .First(m => m.MoodRole == MoodRoleEnum.Primary)
@@ -152,7 +166,6 @@
         Entry.Content = content;
         Entry.TagId = selectedTagId;
         Entry.UpdatedAt = DateTime.UtcNow;
-        // ❌ EntryDate change nagarne
 
         await EntryService.UpdateEntry(
             Entry,

@@ -121,31 +121,27 @@
 </div>
 
 @code {
-    // =========================
+
     // DATA (Service bata aako)
-    // =========================
     List<JournalEntry> Entries = new();        // DB bata aako full data
     List<JournalEntry> PagedEntries = new();  // screen ma dekhaune data
     List<Mood> AllMoods = new();              // filter dropdown ko lagi
 
-    // =========================
+
     // FILTER STATE (UI bata aauxa)
-    // =========================
     string searchText = "";
     string selectedMood = "";
     DateTime? startDate;
     DateTime? endDate;
 
-    // =========================
+
     // PAGINATION STATE
-    // =========================
     int CurrentPage = 1;
     int PageSize = 5;
     int TotalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        // ❗ UI le DB sanga bolena
         // UI → Service → Repository → DbContext
         Entries = await EntryService.GetEntries();
 
@@ -159,9 +155,8 @@
         ApplyFilters();
     }
 
-    // =========================
-    // FILTER LOGIC (simple, viva-friendly)
-    // =========================
+  
+    // FILTER LOGIC
     IEnumerable<JournalEntry> FilteredEntries =>
         Entries.Where(e =>
             (string.IsNullOrWhiteSpace(searchText) ||
@@ -172,9 +167,8 @@
             (!endDate.HasValue || e.EntryDate.Date <= endDate.Value.Date)
         );
 
-    // =========================
+
     // APPLY FILTER + PAGINATION
-    // =========================
     void ApplyFilters()
     {
         var list = FilteredEntries
@@ -193,9 +187,8 @@
             .ToList();
     }
 
-    // =========================
+
     // EVENTS (UI bata call huncha)
-    // =========================
     void OnFilterChanged()
     {
         CurrentPage = 1;

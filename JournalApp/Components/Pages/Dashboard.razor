@@ -5,7 +5,10 @@
 @inject IEntryService EntryService
 @inject IJSRuntime JS
 
-<h2>Analytics</h2>
+<div class="db-head">
+    <h1>Dashboard</h1>
+    <p>Dashboard Analytics & Insights</p>
+</div>
 
 <!-- KPI CARDS -->
 <div class="row g-3 mb-4">
@@ -61,14 +64,6 @@
 
 <!-- ROW 2 -->
 <div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="card chart-card p-3">
-            <div class="chart-title">Tag Breakdown</div>
-            <div class="chart-body">
-                <canvas id="tagBreakdownChart"></canvas>
-            </div>
-        </div>
-    </div>
 
     <div class="col-md-6">
         <div class="card chart-card p-3">
@@ -78,170 +73,167 @@
             </div>
         </div>
     </div>
+
+    <div class="col-md-6">
+        <div class="card chart-card p-3">
+            <div class="chart-title">Tag Breakdown</div>
+            <div class="chart-body">
+                <canvas id="tagBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @code {
+
+
+    // DATA FROM SERVICE
     List<JournalEntry> entries = new();
 
-    int DailyStreak;
-    int LongestStreak;
-    int MissedDays;
+    // KPI VALUES
+    int DailyStreak = 0;
+    int LongestStreak = 0;
+    int MissedDays = 0;
     string MostFrequentMood = "-";
 
     protected override async Task OnInitializedAsync()
     {
         entries = await EntryService.GetEntries();
+
         CalculateKpis();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || !entries.Any())
-            return;
-
-        // Mood Distribution
-        var moods = entries
-            .SelectMany(e => e.EntryMoods)
-            .GroupBy(m => m.Mood!.MoodName)
-            .Select(g => new { Name = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .ToList();
-
-        if (moods.Any())
+        // Charts should render only once and only if data exists
+        if (firstRender && entries.Any())
         {
-            await JS.InvokeVoidAsync(
-                "renderMoodChart",
-                moods.Select(x => x.Name).ToArray(),
-                moods.Select(x => x.Count).ToArray()
-            );
+            await RenderCharts();
         }
-
-        // Most Used Tags
-        var tags = entries
-            .Where(e => e.Tag != null)
-            .GroupBy(e => e.Tag!.TagName)
-            .Select(g => new { Name = g.Key, Count = g.Count() })
-            .OrderByDescending(x => x.Count)
-            .Take(10)
-            .ToList();
-
-        if (tags.Any())
-        {
-            await JS.InvokeVoidAsync(
-                "renderMostUsedTagsChart",
-                tags.Select(x => x.Name).ToArray(),
-                tags.Select(x => x.Count).ToArray()
-            );
-
-            await JS.InvokeVoidAsync(
-                "renderTagBreakdownChart",
-                tags.Select(x => x.Name).ToArray(),
-                tags.Select(x => x.Count).ToArray()
-            );
-        }
-
-        // Word Count Trend
-        var startDate = entries.Min(e => e.CreatedAt.Date);
-        var endDate = entries.Max(e => e.CreatedAt.Date);
-
-        var wordMap = entries
-            .GroupBy(e => e.CreatedAt.Date)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Sum(e => e.Content.Split(new[] { ' ', '\n', '\r', '\t' },
-                    StringSplitOptions.RemoveEmptyEntries).Length)
-            );
-
-        var labels = new List<string>();
-        var values = new List<int>();
-
-        // Debug: Check date range
-        Console.WriteLine($"Start: {startDate}, End: {endDate}, Total Days: {(endDate - startDate).Days + 1}");
-
-        for (var d = startDate; d <= endDate; d = d.AddDays(1))
-        {
-            string label = d.ToString("yyyy-MM-dd"); // Full date format
-            int wordCount = wordMap.ContainsKey(d) ? wordMap[d] : 0;
-
-            labels.Add(label);
-            values.Add(wordCount);
-
-            // Debug
-            Console.WriteLine($"Date: {label}, Words: {wordCount}");
-        }
-
-        Console.WriteLine($"Total labels: {labels.Count}, Total values: {values.Count}");
-
-        await JS.InvokeVoidAsync(
-            "renderWordTrendChart",
-            labels.ToArray(),
-            values.ToArray()
-        );
     }
 
+ 
+    // KPI CALCULATIONS
     void CalculateKpis()
     {
-        var dates = entries
-            .Select(e => e.CreatedAt.Date)
+        if (!entries.Any())
+            return;
+
+        // Get unique entry dates (sorted)
+        var entryDates = entries
+            .Select(e => e.EntryDate.Date)
             .Distinct()
             .OrderBy(d => d)
             .ToList();
 
-        Console.WriteLine($"Total unique dates in entries: {dates.Count}");
-        if (dates.Any())
-        {
-            Console.WriteLine($"First date: {dates.First()}, Last date: {dates.Last()}");
-        }
-
-        if (!dates.Any())
-        {
-            DailyStreak = 0;
-            LongestStreak = 0;
-            MissedDays = 0;
-            MostFrequentMood = "-";
-            return;
-        }
-
-        // Daily streak - last entry bata backward
+        // ---------- DAILY STREAK ----------
         DailyStreak = 0;
-        var check = dates.Last();
+        var today = DateTime.Today;
+        var checkDate = entryDates.Contains(today) ? today : today.AddDays(-1);
 
-        while (dates.Contains(check))
+        while (entryDates.Contains(checkDate))
         {
             DailyStreak++;
-            check = check.AddDays(-1);
+            checkDate = checkDate.AddDays(-1);
         }
 
-        Console.WriteLine($"Daily Streak: {DailyStreak}");
+        // ---------- LONGEST STREAK ----------
+        int tempStreak = 0;
+        DateTime? lastDate = null;
 
-        // Longest streak
-        int current = 1;
-        LongestStreak = 1;
-
-        for (int i = 1; i < dates.Count; i++)
+        foreach (var date in entryDates)
         {
-            if ((dates[i] - dates[i - 1]).Days == 1)
-            {
-                current++;
-                LongestStreak = Math.Max(LongestStreak, current);
-            }
+            if (lastDate == null || (date - lastDate.Value).Days == 1)
+                tempStreak++;
             else
-            {
-                current = 1;
-            }
+                tempStreak = 1;
+
+            LongestStreak = Math.Max(LongestStreak, tempStreak);
+            lastDate = date;
         }
 
-        Console.WriteLine($"Longest Streak: {LongestStreak}");
+        // ---------- MISSED DAYS ----------
+        int totalDays = (entryDates.Max() - entryDates.Min()).Days + 1;
+        MissedDays = totalDays - entryDates.Count;
 
-        // Missed days
-        MissedDays = (dates.Last() - dates.First()).Days + 1 - dates.Count;
-        Console.WriteLine($"Missed Days: {MissedDays}");
-
-        // Most frequent mood
+        // ---------- MOST FREQUENT MOOD ----------
         MostFrequentMood = entries
             .SelectMany(e => e.EntryMoods)
             .GroupBy(m => m.Mood!.MoodName)
             .OrderByDescending(g => g.Count())
-            .FirstOrDefault()?.Key ?? "-";
+            .Select(g => g.Key)
+            .FirstOrDefault() ?? "-";
+    }
+
+
+    // CHART DATA + JS CALLS
+    async Task RenderCharts()
+    {
+        // ----- MOOD DISTRIBUTION -----
+        var moodData = entries
+            .SelectMany(e => e.EntryMoods)
+            .GroupBy(m => m.Mood!.MoodCategory)
+            .Select(g => new
+            {
+                Label = g.Key.ToString(),          // Positive / Neutral / Negative
+                Count = g.Count()
+            })
+            .ToList();
+
+
+        if (moodData.Any())
+        {
+            await JS.InvokeVoidAsync(
+                "renderMoodChart",
+                moodData.Select(x => x.Label).ToArray(),
+                moodData.Select(x => x.Count).ToArray()
+            );
+        }
+
+        // ----- WORD COUNT TREND -----
+        var wordTrend = entries
+            .GroupBy(e => e.EntryDate.Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new
+            {
+                Date = g.Key.ToString("MMM dd"),
+                Count = g.Sum(e =>
+                    e.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length)
+            })
+            .ToList();
+
+        if (wordTrend.Any())
+        {
+            await JS.InvokeVoidAsync(
+                "renderWordTrendChart",
+                wordTrend.Select(x => x.Date).ToArray(),
+                wordTrend.Select(x => x.Count).ToArray()
+            );
+        }
+
+        // ----- TAG DATA -----
+        var tagData = entries
+            .Where(e => e.Tag != null)
+            .GroupBy(e => e.Tag!.TagName)
+            .Select(g => new { Name = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .Take(5)
+            .ToList();
+
+        if (tagData.Any())
+        {
+            await JS.InvokeVoidAsync(
+                "renderMostUsedTagsChart",
+                tagData.Select(x => x.Name).ToArray(),
+                tagData.Select(x => x.Count).ToArray()
+            );
+
+            await JS.InvokeVoidAsync(
+                "renderTagBreakdownChart",
+                tagData.Select(x => x.Name).ToArray(),
+                tagData.Select(x => x.Count).ToArray()
+            );
+        }
     }
 }

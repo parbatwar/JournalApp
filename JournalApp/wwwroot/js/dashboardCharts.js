@@ -47,9 +47,8 @@ function renderMoodChart(labels, data) {
     });
 }
 
-// Most Used Tags Chart
+// Most Used Tags - BAR CHART
 function renderMostUsedTagsChart(labels, data) {
-    // Destroy old chart if exists
     if (mostUsedTagsChartInstance) {
         mostUsedTagsChartInstance.destroy();
     }
@@ -62,38 +61,21 @@ function renderMostUsedTagsChart(labels, data) {
         data: {
             labels: labels,
             datasets: [{
-                label: "Tags",
+                label: 'Usage Count',
                 data: data,
-                backgroundColor: '#36A2EB',
-                borderColor: '#2E8BC0',
-                borderWidth: 1
+                backgroundColor: '#36A2EB'
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                },
-                x: {
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 45
-                    }
-                }
-            }
+            plugins: { legend: { display: false } }
         }
     });
 }
 
-// Tag Breakdown Chart
+// Tag Breakdown - DOUGHNUT CHART
 function renderTagBreakdownChart(labels, data) {
-    // Destroy old chart if exists
     if (tagBreakdownChartInstance) {
         tagBreakdownChartInstance.destroy();
     }
@@ -107,30 +89,18 @@ function renderTagBreakdownChart(labels, data) {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: colors,
-                borderWidth: 2,
-                borderColor: '#fff'
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 10,
-                        font: { size: 12 }
-                    }
-                }
-            }
+            maintainAspectRatio: false
         }
     });
 }
 
 // Word Count Trend Chart
 function renderWordTrendChart(labels, data) {
-    // Destroy old chart if exists
     if (wordTrendChartInstance) {
         wordTrendChartInstance.destroy();
     }
@@ -143,39 +113,19 @@ function renderWordTrendChart(labels, data) {
         data: {
             labels: labels,
             datasets: [{
-                label: "Word Count",
+                label: "Words per Day",
                 data: data,
                 borderColor: '#4BC0C0',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 fill: true,
-                pointRadius: 3,
-                pointHoverRadius: 6
+                tension: 0.3
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 50 }
-                },
-                x: {
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 0,
-                        autoSkip: true,
-                        maxTicksLimit: 15
-                    }
-                }
+                y: { beginAtZero: true }
             }
         }
     });
