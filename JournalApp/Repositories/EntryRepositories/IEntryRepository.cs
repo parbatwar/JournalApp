@@ -1,12 +1,11 @@
 ﻿using JournalApp.Models;
-using JournalApp.Services.EntryService;
 
 namespace JournalApp.Repositories.EntryRepositories;
 
 public interface IEntryRepository
 {
-    Task AddEntry(EntryDto dto);
-    Task UpdateEntry(EntryDto dto);
+    Task AddEntry(JournalEntry entry, int userId, int primaryMoodId, int? secondaryMoodId);
+    Task UpdateEntry(JournalEntry entry, int primaryMoodId, int? secondaryMoodId);
     Task DeleteEntry(int entryId);
 
     Task<List<JournalEntry>> GetEntries();

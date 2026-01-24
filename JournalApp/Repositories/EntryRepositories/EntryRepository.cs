@@ -1,5 +1,4 @@
 ﻿using JournalApp.Models;
-using JournalApp.Services.EntryService;
 using Microsoft.EntityFrameworkCore;
 
 namespace JournalApp.Repositories.EntryRepositories;
@@ -10,40 +9,40 @@ public class EntryRepository : IEntryRepository
 
     public EntryRepository(AppDbContext db)
     {
-        _db = db;
+        _db = db; // DbContext inject
     }
 
-    public async Task AddEntry(EntryDto dto)
+    public async Task AddEntry(
+        JournalEntry entry,
+        int userId,
+        int primaryMoodId,
+        int? secondaryMoodId
+    )
     {
-        // entry create
-        var entry = new JournalEntry
-        {
-            Title = dto.Title,
-            Content = dto.Content,
-            EntryDate = dto.EntryDate,
-            TagId = dto.TagId,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
+        // Required FK set
+        entry.UserId = userId;                 // logged-in user
+        entry.CreatedAt = DateTime.UtcNow;     // entry created time
+        entry.UpdatedAt = DateTime.UtcNow;     // entry updated time
 
+        // Save entry first (JournalId generate huncha)
         _db.Entries.Add(entry);
         await _db.SaveChangesAsync();
 
-        // primary mood
+        // Primary mood (required)
         _db.EntryMood.Add(new JournalEntryMood
         {
             JournalId = entry.JournalId,
-            MoodId = dto.PrimaryMoodId,
+            MoodId = primaryMoodId,
             MoodRole = MoodRoleEnum.Primary
         });
 
-        // secondary mood (optional)
-        if (dto.SecondaryMoodId != null)
+        // Secondary mood (optional)
+        if (secondaryMoodId.HasValue)
         {
             _db.EntryMood.Add(new JournalEntryMood
             {
                 JournalId = entry.JournalId,
-                MoodId = dto.SecondaryMoodId.Value,
+                MoodId = secondaryMoodId.Value,
                 MoodRole = MoodRoleEnum.Secondary
             });
         }
@@ -51,34 +50,38 @@ public class EntryRepository : IEntryRepository
         await _db.SaveChangesAsync();
     }
 
-    public async Task UpdateEntry(EntryDto dto)
+    public async Task UpdateEntry(
+        JournalEntry entry,
+        int primaryMoodId,
+        int? secondaryMoodId
+    )
     {
-        var entry = await _db.Entries
-            .FirstAsync(e => e.JournalId == dto.JournalId);
+        entry.UpdatedAt = DateTime.UtcNow;
 
-        entry.Title = dto.Title;
-        entry.Content = dto.Content;
-        entry.TagId = dto.TagId;
-        entry.UpdatedAt = DateTime.Now;
+        // Update entry
+        _db.Entries.Update(entry);
 
-        // old moods delete
-        var moods = _db.EntryMood.Where(m => m.JournalId == entry.JournalId);
-        _db.EntryMood.RemoveRange(moods);
+        // Remove old moods
+        var oldMoods = _db.EntryMood
+            .Where(m => m.JournalId == entry.JournalId);
 
-        // reinsert moods
+        _db.EntryMood.RemoveRange(oldMoods);
+
+        // Re-add primary mood
         _db.EntryMood.Add(new JournalEntryMood
         {
             JournalId = entry.JournalId,
-            MoodId = dto.PrimaryMoodId,
+            MoodId = primaryMoodId,
             MoodRole = MoodRoleEnum.Primary
         });
 
-        if (dto.SecondaryMoodId != null)
+        // Re-add secondary mood (if any)
+        if (secondaryMoodId.HasValue)
         {
             _db.EntryMood.Add(new JournalEntryMood
             {
                 JournalId = entry.JournalId,
-                MoodId = dto.SecondaryMoodId.Value,
+                MoodId = secondaryMoodId.Value,
                 MoodRole = MoodRoleEnum.Secondary
             });
         }
@@ -88,28 +91,30 @@ public class EntryRepository : IEntryRepository
 
     public async Task DeleteEntry(int entryId)
     {
-        var entry = await _db.Entries.FirstAsync(e => e.JournalId == entryId);
+        var entry = await _db.Entries
+            .FirstAsync(e => e.JournalId == entryId);
+
         _db.Entries.Remove(entry);
         await _db.SaveChangesAsync();
     }
 
-    public async Task<List<JournalEntry>> GetEntries()
-        => await _db.Entries
+    public Task<List<JournalEntry>> GetEntries()
+        => _db.Entries
             .Include(e => e.EntryMoods)
                 .ThenInclude(em => em.Mood)
             .Include(e => e.Tag)
             .OrderByDescending(e => e.EntryDate)
             .ToListAsync();
 
-    public async Task<JournalEntry?> GetEntryById(int entryId)
-        => await _db.Entries
+    public Task<JournalEntry?> GetEntryById(int entryId)
+        => _db.Entries
             .Include(e => e.EntryMoods)
                 .ThenInclude(em => em.Mood)
             .Include(e => e.Tag)
             .FirstOrDefaultAsync(e => e.JournalId == entryId);
 
-    public async Task<int?> GetEntryIdByDate(DateTime date)
-        => await _db.Entries
+    public Task<int?> GetEntryIdByDate(DateTime date)
+        => _db.Entries
             .Where(e => e.EntryDate == date.Date)
             .Select(e => (int?)e.JournalId)
             .FirstOrDefaultAsync();

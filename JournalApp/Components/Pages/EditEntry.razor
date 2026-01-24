@@ -3,6 +3,7 @@
 
 @using JournalApp.Models
 @using JournalApp.Services.EntryService
+
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject IEntryService EntryService
@@ -13,14 +14,6 @@
 </div>
 
 <div class="content-card mb-4">
-
-    <!-- Entry Date -->
-    <div class="mb-4 col-md-4">
-        <label class="form-label">Entry Date</label>
-        <input type="date"
-               class="form-control"
-               @bind="entryDate" />
-    </div>
 
     <!-- Title -->
     <div class="mb-4">
@@ -43,7 +36,7 @@
             @foreach (var mood in moods)
             {
                 <button type="button"
-                        class="btn @(primaryMoodId == mood.MoodId ? "btn-primary" : "btn-outline-secondary")"
+                        class="btn @(primaryMoodId == mood.MoodId ? "btn-dark" : "btn-outline-dark")"
                         @onclick="() => primaryMoodId = mood.MoodId">
                     @mood.MoodName
                 </button>
@@ -59,10 +52,12 @@
             {
                 <button type="button"
                         class="btn @(secondaryMoodId == mood.MoodId ? "btn-secondary" : "btn-outline-secondary")"
-                        @onclick="() => secondaryMoodId = mood.MoodId">
-                    @mood.MoodName
-                </button>
-            }
+                        @onclick="() =>
+                        secondaryMoodId =
+                            secondaryMoodId == mood.MoodId ? 0 : mood.MoodId">
+                @mood.MoodName
+            </button>
+                        }
         </div>
     </div>
 
@@ -90,23 +85,22 @@
 
     [Parameter] public int EntryId { get; set; }
 
-    // form fields
+    JournalEntry Entry = null!;
+
     string title = "";
-    string content = "";
-    DateTime entryDate;
     int primaryMoodId;
     int secondaryMoodId;
     int selectedTagId;
 
-    // data
     List<Mood> moods = new();
     List<Tag> tags = new();
 
     protected override async Task OnInitializedAsync()
     {
-        var entry = await EntryService.GetEntryById(EntryId);
+        JournalEntry journalEntry = await EntryService.GetEntryById(EntryId);
+        Entry = journalEntry;
 
-        if (entry == null)
+        if (Entry == null)
         {
             Nav.NavigateTo("/all-entries");
             return;
@@ -115,17 +109,15 @@
         moods = await EntryService.GetMoods();
         tags = await EntryService.GetTags();
 
-        // preload
-        title = entry.Title;
-        content = entry.Content;
-        entryDate = entry.EntryDate;
-        selectedTagId = entry.TagId;
+        // preload form
+        title = Entry.Title;
+        selectedTagId = Entry.TagId;
 
-        primaryMoodId = entry.EntryMoods
+        primaryMoodId = Entry.EntryMoods
             .First(m => m.MoodRole == MoodRoleEnum.Primary)
             .MoodId;
 
-        secondaryMoodId = entry.EntryMoods
+        secondaryMoodId = Entry.EntryMoods
             .Where(m => m.MoodRole == MoodRoleEnum.Secondary)
             .Select(m => m.MoodId)
             .FirstOrDefault();
@@ -136,32 +128,39 @@
         if (firstRender)
         {
             await JS.InvokeVoidAsync("initQuill");
-            await JS.InvokeVoidAsync("setQuillHtml", content);
+            await JS.InvokeVoidAsync("setQuillHtml", Entry.Content);
         }
     }
 
     async Task UpdateEntry()
     {
-        var updatedContent = await JS.InvokeAsync<string>("getQuillHtml");
-
-        var dto = new EntryDto
+        if (string.IsNullOrWhiteSpace(title))
         {
-            JournalId = EntryId,
-            Title = title,
-            Content = updatedContent,
-            EntryDate = entryDate,
-            TagId = selectedTagId,
-            PrimaryMoodId = primaryMoodId,
-            SecondaryMoodId = secondaryMoodId == 0 ? null : secondaryMoodId
-        };
+            await ShowAlert("Alert", "Title is required");
+            return;
+        }
 
-        await EntryService.UpdateEntry(dto);
+        if (primaryMoodId == 0)
+        {
+            await ShowAlert("Alert", "Please select a primary mood");
+            return;
+        }
 
-        await ShowAlert(
-            "Updated",
-            "Journal entry updated successfully"
+        var content = await JS.InvokeAsync<string>("getQuillHtml");
+
+        Entry.Title = title;
+        Entry.Content = content;
+        Entry.TagId = selectedTagId;
+        Entry.UpdatedAt = DateTime.UtcNow;
+        // ❌ EntryDate change nagarne
+
+        await EntryService.UpdateEntry(
+            Entry,
+            primaryMoodId,
+            secondaryMoodId == 0 ? null : secondaryMoodId
         );
 
+        await ShowAlert("Updated", "Journal entry updated successfully");
         Nav.NavigateTo($"/entry/{EntryId}");
     }
 

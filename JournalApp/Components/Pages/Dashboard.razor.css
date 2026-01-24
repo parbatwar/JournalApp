@@ -1,0 +1,50 @@
+﻿/* KPI cards */
+.kpi-card {
+    padding: 16px;
+    text-align: center;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.kpi-title {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* Chart cards */
+.chart-card {
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chart-title {
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.chart-body {
+    flex: 1;
+    position: relative;
+    min-height: 300px;
+}
+
+    /* Make charts responsive */
+    .chart-body canvas {
+        max-height: 100%;
+        max-width: 100%;
+    }

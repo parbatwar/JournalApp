@@ -1,6 +1,247 @@
 ﻿@page "/dashboard"
 @layout MainLayout
-@inject NavigationManager Nav
+@using JournalApp.Models
+@using JournalApp.Services.EntryService
+@inject IEntryService EntryService
+@inject IJSRuntime JS
 
-<h3>Under Construction</h3>
-<p>Sorry, the content you are looking for is under development.</p>
+<h2>Analytics</h2>
+
+<!-- KPI CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="kpi-title">🔥 Daily Streak</div>
+            <div class="kpi-value">@DailyStreak days</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="kpi-title">🏆 Longest Streak</div>
+            <div class="kpi-value">@LongestStreak days</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="kpi-title">❌ Missed Days</div>
+            <div class="kpi-value">@MissedDays</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card kpi-card">
+            <div class="kpi-title">😊 Frequent Mood</div>
+            <div class="kpi-value">@MostFrequentMood</div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card chart-card p-3">
+            <div class="chart-title">Mood Distribution</div>
+            <div class="chart-body">
+                <canvas id="moodChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card chart-card p-3">
+            <div class="chart-title">Most Used Tags</div>
+            <div class="chart-body">
+                <canvas id="mostUsedTagsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ROW 2 -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card chart-card p-3">
+            <div class="chart-title">Tag Breakdown</div>
+            <div class="chart-body">
+                <canvas id="tagBreakdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card chart-card p-3">
+            <div class="chart-title">Word Count Trend</div>
+            <div class="chart-body">
+                <canvas id="wordTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    List<JournalEntry> entries = new();
+
+    int DailyStreak;
+    int LongestStreak;
+    int MissedDays;
+    string MostFrequentMood = "-";
+
+    protected override async Task OnInitializedAsync()
+    {
+        entries = await EntryService.GetEntries();
+        CalculateKpis();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || !entries.Any())
+            return;
+
+        // Mood Distribution
+        var moods = entries
+            .SelectMany(e => e.EntryMoods)
+            .GroupBy(m => m.Mood!.MoodName)
+            .Select(g => new { Name = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        if (moods.Any())
+        {
+            await JS.InvokeVoidAsync(
+                "renderMoodChart",
+                moods.Select(x => x.Name).ToArray(),
+                moods.Select(x => x.Count).ToArray()
+            );
+        }
+
+        // Most Used Tags
+        var tags = entries
+            .Where(e => e.Tag != null)
+            .GroupBy(e => e.Tag!.TagName)
+            .Select(g => new { Name = g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .Take(10)
+            .ToList();
+
+        if (tags.Any())
+        {
+            await JS.InvokeVoidAsync(
+                "renderMostUsedTagsChart",
+                tags.Select(x => x.Name).ToArray(),
+                tags.Select(x => x.Count).ToArray()
+            );
+
+            await JS.InvokeVoidAsync(
+                "renderTagBreakdownChart",
+                tags.Select(x => x.Name).ToArray(),
+                tags.Select(x => x.Count).ToArray()
+            );
+        }
+
+        // Word Count Trend
+        var startDate = entries.Min(e => e.CreatedAt.Date);
+        var endDate = entries.Max(e => e.CreatedAt.Date);
+
+        var wordMap = entries
+            .GroupBy(e => e.CreatedAt.Date)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(e => e.Content.Split(new[] { ' ', '\n', '\r', '\t' },
+                    StringSplitOptions.RemoveEmptyEntries).Length)
+            );
+
+        var labels = new List<string>();
+        var values = new List<int>();
+
+        // Debug: Check date range
+        Console.WriteLine($"Start: {startDate}, End: {endDate}, Total Days: {(endDate - startDate).Days + 1}");
+
+        for (var d = startDate; d <= endDate; d = d.AddDays(1))
+        {
+            string label = d.ToString("yyyy-MM-dd"); // Full date format
+            int wordCount = wordMap.ContainsKey(d) ? wordMap[d] : 0;
+
+            labels.Add(label);
+            values.Add(wordCount);
+
+            // Debug
+            Console.WriteLine($"Date: {label}, Words: {wordCount}");
+        }
+
+        Console.WriteLine($"Total labels: {labels.Count}, Total values: {values.Count}");
+
+        await JS.InvokeVoidAsync(
+            "renderWordTrendChart",
+            labels.ToArray(),
+            values.ToArray()
+        );
+    }
+
+    void CalculateKpis()
+    {
+        var dates = entries
+            .Select(e => e.CreatedAt.Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        Console.WriteLine($"Total unique dates in entries: {dates.Count}");
+        if (dates.Any())
+        {
+            Console.WriteLine($"First date: {dates.First()}, Last date: {dates.Last()}");
+        }
+
+        if (!dates.Any())
+        {
+            DailyStreak = 0;
+            LongestStreak = 0;
+            MissedDays = 0;
+            MostFrequentMood = "-";
+            return;
+        }
+
+        // Daily streak - last entry bata backward
+        DailyStreak = 0;
+        var check = dates.Last();
+
+        while (dates.Contains(check))
+        {
+            DailyStreak++;
+            check = check.AddDays(-1);
+        }
+
+        Console.WriteLine($"Daily Streak: {DailyStreak}");
+
+        // Longest streak
+        int current = 1;
+        LongestStreak = 1;
+
+        for (int i = 1; i < dates.Count; i++)
+        {
+            if ((dates[i] - dates[i - 1]).Days == 1)
+            {
+                current++;
+                LongestStreak = Math.Max(LongestStreak, current);
+            }
+            else
+            {
+                current = 1;
+            }
+        }
+
+        Console.WriteLine($"Longest Streak: {LongestStreak}");
+
+        // Missed days
+        MissedDays = (dates.Last() - dates.First()).Days + 1 - dates.Count;
+        Console.WriteLine($"Missed Days: {MissedDays}");
+
+        // Most frequent mood
+        MostFrequentMood = entries
+            .SelectMany(e => e.EntryMoods)
+            .GroupBy(m => m.Mood!.MoodName)
+            .OrderByDescending(g => g.Count())
+            .FirstOrDefault()?.Key ?? "-";
+    }
+}

@@ -1,4 +1,5 @@
-﻿using JournalApp.Repositories.EntryRepositories;
+﻿using JournalApp.Data;
+using JournalApp.Repositories.EntryRepositories;
 using JournalApp.Repositories.UserRepository;
 using JournalApp.Services.EntryService;
 using JournalApp.Services.UserService;
@@ -61,7 +62,13 @@ namespace JournalApp
                 db.Database.EnsureDeleted();
                 db.Database.EnsureCreated();
 
+                // ✅ async method sync way ma call
+                DataSeeder.SeedEntriesAsync(db)
+                          .GetAwaiter()
+                          .GetResult();
+
             }
+
             return app;
 
 

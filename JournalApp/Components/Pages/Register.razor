@@ -26,6 +26,7 @@
                 <InputText class="form-control"
                            placeholder="Username"
                            @bind-Value="user.Username" />
+                <ValidationMessage For="() => user.Username" />
             </div>
 
             <div class="field">
@@ -33,6 +34,7 @@
                            type="password"
                            placeholder="Password"
                            @bind-Value="user.Password" />
+                <ValidationMessage For="() => user.Password" />
             </div>
 
             <button class="register-btn mb-3" type="submit">

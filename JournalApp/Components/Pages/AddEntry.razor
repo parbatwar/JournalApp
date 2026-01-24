@@ -3,13 +3,12 @@
 
 @using JournalApp.Models
 @using JournalApp.Services.EntryService
+@using Microsoft.EntityFrameworkCore
 
 @inject NavigationManager Nav
 @inject IJSRuntime JS
-@using JournalApp.Services.EntryService
 @inject IEntryService EntryService
-
-
+@inject AppDbContext Db
 
 <div class="page-header">
     <h1>New Journal Entry</h1>
@@ -17,14 +16,6 @@
 </div>
 
 <div class="content-card mb-4">
-
-    <!-- Entry Date -->
-    <div class="mb-4 col-md-4">
-        <label class="form-label">Entry Date</label>
-        <input type="date"
-               class="form-control"
-               @bind="entryDate" />
-    </div>
 
     <!-- Title -->
     <div class="mb-4">
@@ -64,10 +55,12 @@
             {
                 <button type="button"
                         class="btn @(secondaryMoodId == mood.MoodId ? "btn-secondary" : "btn-outline-secondary")"
-                        @onclick="() => secondaryMoodId = mood.MoodId">
-                    @mood.MoodName
-                </button>
-            }
+                        @onclick="() =>
+                        secondaryMoodId =
+                            secondaryMoodId == mood.MoodId ? 0 : mood.MoodId">
+                @mood.MoodName
+            </button>
+                        }
         </div>
     </div>
 
@@ -80,8 +73,19 @@
             {
                 <option value="@tag.TagId">@tag.TagName</option>
             }
+            <option value="-1">➕ Enter your own tag</option>
         </select>
     </div>
+
+    @if (selectedTagId == -1)
+    {
+        <div class="mb-4">
+            <label class="form-label">Custom Tag</label>
+            <input class="form-control"
+                   placeholder="Enter your own tag"
+                   @bind="customTagName" />
+        </div>
+    }
 
     <!-- Save Button -->
     <div class="d-grid mt-4">
@@ -94,24 +98,20 @@
 
 @code {
 
-    // =========================
-    // Form fields
-    // =========================
     string title = "";
-    DateTime entryDate = DateTime.Today;
     int primaryMoodId = 0;
     int secondaryMoodId = 0;
-    int selectedTagId = 0;
 
-    // =========================
-    // Data lists
-    // =========================
+    int selectedTagId = 0;
+    string customTagName = "";
+
     List<Mood> moods = new();
     List<Tag> tags = new();
 
+    int userId = 1; // TEMP
+
     protected override async Task OnInitializedAsync()
     {
-        // Load moods & tags from service (read-only)
         moods = await EntryService.GetMoods();
         tags = await EntryService.GetTags();
     }
@@ -126,9 +126,19 @@
 
     async Task SaveEntry()
     {
-        // -------------------------
-        // Validations
-        // -------------------------
+        // ❗ one entry per day rule
+        var existingEntryId =
+            await EntryService.GetEntryIdByDate(DateTime.UtcNow.Date);
+
+        if (existingEntryId != null)
+        {
+            await ShowAlert(
+                "Already Exists",
+                "You have already written a journal entry for today."
+            );
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(title))
         {
             await ShowAlert("Alert", "Title is required");
@@ -147,25 +157,59 @@
             return;
         }
 
-        // -------------------------
-        // Get content from Quill
-        // -------------------------
+        if (selectedTagId == -1 && string.IsNullOrWhiteSpace(customTagName))
+        {
+            await ShowAlert("Alert", "Please enter custom tag");
+            return;
+        }
+
         var content = await JS.InvokeAsync<string>("getQuillHtml");
 
-        // -------------------------
-        // DTO mapping
-        // -------------------------
-        var dto = new EntryDto
+        // tag handling
+        int finalTagId;
+
+        if (selectedTagId == -1)
+        {
+            var existingTag = await Db.Tags.FirstOrDefaultAsync(t =>
+                t.TagName.ToLower() == customTagName.Trim().ToLower());
+
+            if (existingTag == null)
+            {
+                var newTag = new Tag
+                {
+                    TagName = customTagName.Trim(),
+                    TagType = TagTypeEnum.Custom
+                };
+
+                Db.Tags.Add(newTag);
+                await Db.SaveChangesAsync();
+
+                finalTagId = newTag.TagId;
+            }
+            else
+            {
+                finalTagId = existingTag.TagId;
+            }
+        }
+        else
+        {
+            finalTagId = selectedTagId;
+        }
+
+        var entry = new JournalEntry
         {
             Title = title,
             Content = content,
-            EntryDate = entryDate,
-            TagId = selectedTagId,
-            PrimaryMoodId = primaryMoodId,
-            SecondaryMoodId = secondaryMoodId == 0 ? null : secondaryMoodId
+            TagId = finalTagId
+            // EntryDate auto set
         };
 
-        await EntryService.AddEntry(dto);
+        await EntryService.AddEntry(
+            entry,
+            userId,
+            primaryMoodId,
+            secondaryMoodId == 0 ? null : secondaryMoodId
+        );
 
         await ShowAlert("Success", "Journal entry created successfully");
         Nav.NavigateTo("/all-entries");
