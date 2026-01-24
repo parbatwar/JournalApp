@@ -1,94 +1,58 @@
 ﻿@page "/all-entries"
 @layout MainLayout
-
 @using JournalApp.Models
 @using JournalApp.Services.EntryService
+@inject NavigationManager Nav
 @inject IEntryService EntryService
 @inject IJSRuntime JS
 
-<h1>All Entries</h1>
-<p>View your journal history</p>
-
-<!-- FILTER BAR -->
-<div class="mb-3 d-flex gap-2 flex-wrap">
-
-    <input class="form-control w-25"
-           placeholder="Search title..."
-           @oninput="e => { searchText = e.Value?.ToString() ?? ""; Apply(); }" />
-
-    <select class="form-select w-auto"
-            @onchange="e => { selectedMood = e.Value?.ToString() ?? ""; Apply(); }">
-        <option value="">All Moods</option>
-        @foreach (var m in AllMoods)
-        {
-            <option value="@m.MoodName">@m.MoodName</option>
-        }
-    </select>
-
-    <select class="form-select w-auto"
-            @onchange="e => { selectedTag = e.Value?.ToString() ?? ""; Apply(); }">
-        <option value="">All Categories</option>
-        @foreach (var t in AllTags)
-        {
-            <option value="@t.TagName">@t.TagName</option>
-        }
-    </select>
-
-    <input type="date" class="form-control w-auto" @bind="fromDate" />
-    <input type="date" class="form-control w-auto" @bind="toDate" />
-
-    <button class="btn btn-dark" @onclick="ExportPdf">Export PDF</button>
+<div class="page-header">
+    <h1>All Entries</h1>
+    <p>View and Export your journal history</p>
 </div>
 
-<!-- PAGED TABLE -->
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Title</th>
-            <th>Mood</th>
-            <th>Category</th>
-            <th>Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        @{
-            int i = (page - 1) * pageSize + 1;
-        }
-        @foreach (var e in Paged)
-        {
-            <tr>
-                <td>@i</td>
-                <td>@e.Title</td>
-                <td>@string.Join(", ", e.EntryMoods.Select(m => m.Mood!.MoodName))</td>
-                <td>@e.Tag?.TagName</td>
-                <td>@e.EntryDate.ToString("yyyy-MM-dd")</td>
-            </tr>
-            i++;
-        }
-    </tbody>
-</table>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- PAGINATION -->
-<div class="d-flex justify-content-end gap-2">
-    <button class="btn btn-outline-secondary"
-            disabled="@(page==1)"
-            @onclick="()=>Change(-1)">Prev</button>
+<div class="container mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small">Search</label>
+            <input class="form-control" placeholder="Search..." @oninput='e => { searchText = e.Value?.ToString() ?? ""; OnFilterChanged(); }' />
+        </div>
 
-    <span>@page</span>
+        <div class="col-md-2">
+            <label class="form-label small">Mood</label>
+            <select class="form-select" @onchange='e => { selectedMood = e.Value?.ToString() ?? ""; OnFilterChanged(); }'>
+                <option value="">All Moods</option>
+                @foreach (var mood in AllMoods)
+                {
+                    <option value="@mood.MoodName">@mood.MoodName</option>
+                }
+            </select>
+        </div>
 
-    <button class="btn btn-outline-secondary"
-            disabled="@(page==totalPages)"
-            @onclick="()=>Change(1)">Next</button>
+        <div class="col-md-2">
+            <label class="form-label small">From</label>
+            <input type="date" class="form-control" @bind="startDate" @bind:after="OnFilterChanged" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">To</label>
+            <input type="date" class="form-control" @bind="endDate" @bind:after="OnFilterChanged" />
+        </div>
+
+        <div class="col-md-3 text-end">
+            <button class="btn btn-danger w-100" @onclick="ExportToPdf">
+                <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+            </button>
+        </div>
+    </div>
 </div>
 
-<!-- EXPORT TABLE (NO PAGINATION) -->
-<div id="exportArea" style="display:none">
-    <h3>Journal Entries</h3>
-    <table class="table table-bordered">
+<div class="card">
+    <table class="table">
         <thead>
             <tr>
-                <th>#</th>
+                <th>S.No.</th>
                 <th>Title</th>
                 <th>Mood</th>
                 <th>Category</th>
@@ -97,89 +61,172 @@
         </thead>
         <tbody>
             @{
-                int j = 1;
+                int i = (CurrentPage - 1) * PageSize + 1;
             }
-            @foreach (var e in ExportList)
+            @foreach (var entry in PagedEntries)
+            {
+                <tr style="cursor:pointer" @onclick="() => OpenEntry(entry.JournalId)">
+                    <td>@i</td>
+                    <td>@entry.Title</td>
+                    <td>@string.Join(", ", entry.EntryMoods.Select(m => m.Mood?.MoodName))</td>
+                    <td>@entry.Tag?.TagName</td>
+                    <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
+                </tr>
+                i++;
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination justify-content-end">
+            <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                <a class="page-link" href="#" @onclick="PrevPage" @onclick:preventDefault>Previous</a>
+            </li>
+            <li class="page-item active"><span class="page-link">@CurrentPage</span></li>
+            <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                <a class="page-link" href="#" @onclick="NextPage" @onclick:preventDefault>Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<div id="pdf-export-container" style="display:none; padding: 30px; background: white; color: black;">
+    <h2 style="text-align: center;">Journal Report</h2>
+    <hr />
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background-color: #eee;">
+                <th style="border: 1px solid #ccc; padding: 8px;">S.No</th>
+                <th style="border: 1px solid #ccc; padding: 8px;">Date</th>
+                <th style="border: 1px solid #ccc; padding: 8px;">Title</th>
+                <th style="border: 1px solid #ccc; padding: 8px;">Moods</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                int pdfI = 1;
+            }
+            @foreach (var entry in FilteredEntries)
             {
                 <tr>
-                    <td>@j</td>
-                    <td>@e.Title</td>
-                    <td>@string.Join(", ", e.EntryMoods.Select(m => m.Mood!.MoodName))</td>
-                    <td>@e.Tag?.TagName</td>
-                    <td>@e.EntryDate.ToString("yyyy-MM-dd")</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">@pdfI</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">@entry.EntryDate.ToShortDateString()</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">@entry.Title</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">@string.Join(", ", entry.EntryMoods.Select(m => m.Mood?.MoodName))</td>
                 </tr>
-                j++;
+                pdfI++;
             }
         </tbody>
     </table>
 </div>
 
 @code {
+    // =========================
+    // DATA (Service bata aako)
+    // =========================
+    List<JournalEntry> Entries = new();        // DB bata aako full data
+    List<JournalEntry> PagedEntries = new();  // screen ma dekhaune data
+    List<Mood> AllMoods = new();              // filter dropdown ko lagi
 
-    List<JournalEntry> Entries = new();
-    List<JournalEntry> Paged = new();
-    List<JournalEntry> ExportList = new();
-
-    List<Mood> AllMoods = new();
-    List<Tag> AllTags = new();
-
+    // =========================
+    // FILTER STATE (UI bata aauxa)
+    // =========================
     string searchText = "";
     string selectedMood = "";
-    string selectedTag = "";
-    DateTime? fromDate;
-    DateTime? toDate;
+    DateTime? startDate;
+    DateTime? endDate;
 
-    int page = 1;
-    int pageSize = 5;
-    int totalPages = 1;
+    // =========================
+    // PAGINATION STATE
+    // =========================
+    int CurrentPage = 1;
+    int PageSize = 5;
+    int TotalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
+        // ❗ UI le DB sanga bolena
+        // UI → Service → Repository → DbContext
         Entries = await EntryService.GetEntries();
 
-        AllMoods = Entries.SelectMany(e => e.EntryMoods)
-                          .Select(m => m.Mood!)
-                          .DistinctBy(m => m.MoodId)
-                          .ToList();
-
-        AllTags = Entries.Where(e => e.Tag != null)
-                         .Select(e => e.Tag!)
-                         .DistinctBy(t => t.TagId)
-                         .ToList();
-
-        Apply();
-    }
-
-    void Apply()
-    {
-        var list = Entries.Where(e =>
-            (string.IsNullOrEmpty(searchText) || e.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(selectedMood) || e.EntryMoods.Any(m => m.Mood!.MoodName == selectedMood)) &&
-            (string.IsNullOrEmpty(selectedTag) || e.Tag!.TagName == selectedTag)
-        ).ToList();
-
-        totalPages = Math.Max(1, (int)Math.Ceiling(list.Count / (double)pageSize));
-        page = Math.Min(page, totalPages);
-
-        Paged = list.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-        ExportList = list;
-    }
-
-    void Change(int d)
-    {
-        page += d;
-        Apply();
-    }
-
-    async Task ExportPdf()
-    {
-        ExportList = ExportList
-            .Where(e =>
-                (!fromDate.HasValue || e.EntryDate.Date >= fromDate.Value.Date) &&
-                (!toDate.HasValue || e.EntryDate.Date <= toDate.Value.Date))
-            .OrderBy(e => e.EntryDate)
+        // Mood dropdown ko data prepare
+        AllMoods = Entries
+            .SelectMany(e => e.EntryMoods)
+            .Select(em => em.Mood!)
+            .DistinctBy(m => m.MoodId)
             .ToList();
 
-        await JS.InvokeVoidAsync("exportPdf");
+        ApplyFilters();
+    }
+
+    // =========================
+    // FILTER LOGIC (simple, viva-friendly)
+    // =========================
+    IEnumerable<JournalEntry> FilteredEntries =>
+        Entries.Where(e =>
+            (string.IsNullOrWhiteSpace(searchText) ||
+                e.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(selectedMood) ||
+                e.EntryMoods.Any(m => m.Mood!.MoodName == selectedMood)) &&
+            (!startDate.HasValue || e.EntryDate.Date >= startDate.Value.Date) &&
+            (!endDate.HasValue || e.EntryDate.Date <= endDate.Value.Date)
+        );
+
+    // =========================
+    // APPLY FILTER + PAGINATION
+    // =========================
+    void ApplyFilters()
+    {
+        var list = FilteredEntries
+            .OrderByDescending(e => e.EntryDate)
+            .ToList();
+
+        TotalPages = Math.Max(1,
+            (int)Math.Ceiling(list.Count / (double)PageSize));
+
+        if (CurrentPage > TotalPages)
+            CurrentPage = TotalPages;
+
+        PagedEntries = list
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+    }
+
+    // =========================
+    // EVENTS (UI bata call huncha)
+    // =========================
+    void OnFilterChanged()
+    {
+        CurrentPage = 1;
+        ApplyFilters();
+    }
+
+    void NextPage()
+    {
+        if (CurrentPage < TotalPages)
+        {
+            CurrentPage++;
+            ApplyFilters();
+        }
+    }
+
+    void PrevPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage--;
+            ApplyFilters();
+        }
+    }
+
+    void OpenEntry(int id)
+    {
+        Nav.NavigateTo($"/entry/{id}");
+    }
+
+    async Task ExportToPdf()
+    {
+        await JS.InvokeVoidAsync("generatePDF", "Journal_Export");
     }
 }

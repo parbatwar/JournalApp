@@ -19,18 +19,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
-        function exportPdf() {
-            const element = document.getElementById("exportArea");
+        window.generatePDF = (filename) => {
+            const element = document.getElementById('pdf-export-container');
+
+            // Show the hidden container briefly for the capture
+            element.style.display = 'block';
 
             const opt = {
                 margin: 0.5,
-                filename: 'journals.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+                filename: filename + '.pdf',
+                image: { type: 'png' },
+                html2canvas: { scale: 3, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+
             };
 
-            html2pdf().set(opt).from(element).save();
+            // New html2pdf usage
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Hide it again
+                element.style.display = 'none';
+            });
         }
     </script>
 
