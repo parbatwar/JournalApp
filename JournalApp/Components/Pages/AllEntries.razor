@@ -6,22 +6,24 @@
 @inject IEntryService EntryService
 @inject IJSRuntime JS
 
-<div class="page-header">
+<div class="page-header px-2">
     <h1>All Entries</h1>
-    <p>View and Export your journal history</p>
+    <p class="text-muted">Manage your thoughts and journal history</p>
 </div>
 
-<div class="container mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label small">Search</label>
-            <input class="form-control" placeholder="Search..." @oninput='e => { searchText = e.Value?.ToString() ?? ""; OnFilterChanged(); }' />
+<div class="filter-wrapper">
+    <div class="filter-container">
+        <div class="filter-item flex-grow-1">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="clean-input" placeholder="Search entries..."
+                   @oninput='e => { searchText = e.Value?.ToString() ?? ""; OnFilterChanged(); }' />
         </div>
 
-        <div class="col-md-2">
-            <label class="form-label small">Mood</label>
-            <select class="form-select" @onchange='e => { selectedMood = e.Value?.ToString() ?? ""; OnFilterChanged(); }'>
-                <option value="">All Moods</option>
+        <div class="v-divider"></div>
+
+        <div class="filter-item">
+            <select class="clean-select" @onchange='e => { selectedMood = e.Value?.ToString() ?? ""; OnFilterChanged(); }'>
+                <option value="">Mood</option>
                 @foreach (var mood in AllMoods)
                 {
                     <option value="@mood.MoodName">@mood.MoodName</option>
@@ -29,11 +31,11 @@
             </select>
         </div>
 
-        <div class="col-md-2">
-            <label class="form-label small">Tag</label>
-            <select class="form-select"
-                    @onchange='e => { selectedTag = e.Value?.ToString() ?? ""; OnFilterChanged(); }'>
-                <option value="">All Tags</option>
+        <div class="v-divider"></div>
+
+        <div class="filter-item">
+            <select class="clean-select" @onchange='e => { selectedTag = e.Value?.ToString() ?? ""; OnFilterChanged(); }'>
+                <option value="">Tag</option>
                 @foreach (var tag in AllTags)
                 {
                     <option value="@tag.TagName">@tag.TagName</option>
@@ -41,93 +43,67 @@
             </select>
         </div>
 
-        <div class="col-md-2">
-            <label class="form-label small">From</label>
-            <input type="date" class="form-control" @bind="startDate" @bind:after="OnFilterChanged" />
-        </div>
-        <div class="col-md-2">
-            <label class="form-label small">To</label>
-            <input type="date" class="form-control" @bind="endDate" @bind:after="OnFilterChanged" />
+        <div class="v-divider"></div>
+
+        <div class="date-range-box">
+            <input type="date" class="clean-date" @bind="startDate" @bind:after="OnFilterChanged" />
+            <span class="date-arrow"><i class="bi bi-arrow-right-short"></i></span>
+            <input type="date" class="clean-date" @bind="endDate" @bind:after="OnFilterChanged" />
         </div>
 
-        <div class="col-md-3 text-end">
-            <button class="btn btn-danger w-100" @onclick="ExportToPdf">
-                <i class="bi bi-file-earmark-pdf"></i> Export to PDF
-            </button>
-        </div>
+        <button class="pdf-btn" @onclick="ExportToPdf" title="Export to PDF">
+            <i class="bi bi-file-earmark-pdf"></i>
+        </button>
     </div>
 </div>
 
-<div class="card">
-    <table class="table">
-        <thead>
-            <tr>
-                <th>S.No.</th>
-                <th>Title</th>
-                <th>Mood</th>
-                <th>Category</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            @{
-                int i = (CurrentPage - 1) * PageSize + 1;
-            }
-            @foreach (var entry in PagedEntries)
-            {
-                <tr style="cursor:pointer" @onclick="() => OpenEntry(entry.JournalId)">
-                    <td>@i</td>
-                    <td>@entry.Title</td>
-                    <td>@string.Join(", ", entry.EntryMoods.Select(m => m.Mood?.MoodName))</td>
-                    <td>@entry.Tag?.TagName</td>
-                    <td>@entry.EntryDate.ToString("yyyy-MM-dd")</td>
+<div class="card premium-card">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th width="60">#</th>
+                    <th>Title</th>
+                    <th>Moods</th>
+                    <th>Category</th>
+                    <th>Date</th>
                 </tr>
-                i++;
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @{
+                    int i = (CurrentPage - 1) * PageSize + 1;
+                }
+                @foreach (var entry in PagedEntries)
+                {
+                    <tr @onclick="() => OpenEntry(entry.JournalId)">
+                        <td class="text-muted">@i.ToString("D2")</td>
+                        <td class="fw-bold text-dark">@entry.Title</td>
+                        <td>
+                            @foreach (var m in entry.EntryMoods)
+                            {
+                                <span class="mood-badge me-1">@m.Mood?.MoodName</span>
+                            }
+                        </td>
+                        <td><span class="text-muted">@entry.Tag?.TagName</span></td>
+                        <td class="text-muted">@entry.EntryDate.ToString("MMM dd, yyyy")</td>
+                    </tr>
+                    i++;
+                }
+            </tbody>
+        </table>
+    </div>
 
-    <nav>
-        <ul class="pagination justify-content-end">
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
             <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
-                <a class="page-link" href="#" @onclick="PrevPage" @onclick:preventDefault>Previous</a>
+                <button class="page-link shadow-none" @onclick="PrevPage"><i class="bi bi-arrow-left"></i></button>
             </li>
-            <li class="page-item active"><span class="page-link">@CurrentPage</span></li>
+            <li class="page-item"><span class="page-link border-0 fw-bold px-3">@CurrentPage</span></li>
             <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
-                <a class="page-link" href="#" @onclick="NextPage" @onclick:preventDefault>Next</a>
+                <button class="page-link shadow-none" @onclick="NextPage"><i class="bi bi-arrow-right"></i></button>
             </li>
         </ul>
     </nav>
-</div>
-
-<div id="pdf-export-container" style="display:none; padding: 30px; background: white; color: black;">
-    <h2 style="text-align: center;">Journal Report</h2>
-    <hr />
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-        <thead>
-            <tr style="background-color: #eee;">
-                <th style="border: 1px solid #ccc; padding: 8px;">S.No</th>
-                <th style="border: 1px solid #ccc; padding: 8px;">Date</th>
-                <th style="border: 1px solid #ccc; padding: 8px;">Title</th>
-                <th style="border: 1px solid #ccc; padding: 8px;">Moods</th>
-            </tr>
-        </thead>
-        <tbody>
-            @{
-                int pdfI = 1;
-            }
-            @foreach (var entry in FilteredEntries)
-            {
-                <tr>
-                    <td style="border: 1px solid #ccc; padding: 8px;">@pdfI</td>
-                    <td style="border: 1px solid #ccc; padding: 8px;">@entry.EntryDate.ToShortDateString()</td>
-                    <td style="border: 1px solid #ccc; padding: 8px;">@entry.Title</td>
-                    <td style="border: 1px solid #ccc; padding: 8px;">@string.Join(", ", entry.EntryMoods.Select(m => m.Mood?.MoodName))</td>
-                </tr>
-                pdfI++;
-            }
-        </tbody>
-    </table>
 </div>
 
 @code {
@@ -246,3 +222,5 @@
         await JS.InvokeVoidAsync("generatePDF", "Journal_Export");
     }
 }
+
+
