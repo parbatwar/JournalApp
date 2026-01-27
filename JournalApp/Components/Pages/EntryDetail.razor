@@ -1,83 +1,73 @@
 ﻿@page "/entry/{EntryId:int}"
 @layout MainLayout
-
 @using JournalApp.Models
 @using JournalApp.Services.EntryService
 @inject IEntryService EntryService
 @inject NavigationManager Nav
 
-<div class="page-header">
-    <h1>Journal Entry</h1>
-    <p>View your journal entry</p>
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1>Journal Entry</h1>
+        <p>Review your captured moment</p>
+    </div>
+    <button class="btn-back" @onclick='() => Nav.NavigateTo("/all-entries")'>
+        <i class="bi bi-arrow-left"></i> Back
+    </button>
 </div>
 
-<div class="card p-4 mb-4">
-
-    <!-- Title -->
-    <h3>@Entry.Title</h3>
-
-    <!-- Entry Date -->
-    <p class="text-muted">
-        @Entry.EntryDate.ToString("yyyy-MM-dd")
-    </p>
-
-    <hr />
-
-    <!-- Content -->
-    <div>
-        @((MarkupString)Entry.Content)
+@if (Entry == null)
+{
+    <div class="text-center p-5">
+        <div class="spinner-border text-primary" role="status"></div>
     </div>
+}
+else
+{
+    <div class="card premium-view-card border-0 shadow">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <h2 class="entry-display-title">@Entry.Title</h2>
+                <span class="date-badge">
+                    <i class="bi bi-calendar3"></i> @Entry.EntryDate.ToString("MMMM dd, yyyy")
+                </span>
+            </div>
 
-    <hr />
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                @foreach (var m in Entry.EntryMoods)
+                {
+                    <span class="mood-pill">
+                        <i class="bi bi-emoji-smile"></i> @m.Mood?.MoodName
+                    </span>
+                }
+                @if (Entry.Tag != null)
+                {
+                    <span class="tag-pill">
+                        <i class="bi bi-tag"></i> @Entry.Tag.TagName
+                    </span>
+                }
+            </div>
 
-    <!-- Mood -->
-    <p class="fw-bold">Mood</p>
-    <div>
-        @string.Join(", ",
-                Entry.EntryMoods
-                .OrderBy(m => m.MoodRole)
-                .Select(m => m.Mood!.MoodName)
-                )
+            <div class="entry-content-box">
+                @((MarkupString)Entry.Content)
+            </div>
+
+            <div class="metadata-footer mt-5 pt-3 border-top d-flex justify-content-between text-muted">
+                <small><i class="bi bi-clock"></i> Created: @Entry.CreatedAt.ToString("MMM dd, hh:mm tt")</small>
+                <small><i class="bi bi-pencil-square"></i> Last Update: @Entry.UpdatedAt.ToString("MMM dd, hh:mm tt")</small>
+            </div>
+        </div>
+
+        <div class="card-footer bg-white border-0 p-4 d-flex gap-3">
+            <button class="btn btn-edit flex-grow-1" @onclick="EditEntry">
+                <i class="bi bi-pencil"></i> Edit Entry
+            </button>
+            <button class="btn btn-delete" @onclick="DeleteEntry">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
     </div>
+}
 
-
-    <hr />
-
-    <!-- Tag / Category -->
-    <p class="fw-bold">Category</p>
-    <div>
-        @Entry.Tag?.TagName
-    </div>
-
-    <hr />
-
-    <!-- Created / Updated -->
-    <p>
-        <strong>Created at:</strong>
-        @Entry.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-    </p>
-
-    <p>
-        <strong>Updated at:</strong>
-        @Entry.UpdatedAt.ToString("yyyy-MM-dd HH:mm")
-    </p>
-
-    <hr />
-
-    <!-- Actions -->
-    <div class="d-flex gap-2">
-        <button class="btn btn-primary"
-                @onclick="EditEntry">
-            Edit
-        </button>
-
-        <button class="btn btn-danger"
-                @onclick="DeleteEntry">
-            Delete
-        </button>
-    </div>
-
-</div>
 
 @code {
     [Parameter]

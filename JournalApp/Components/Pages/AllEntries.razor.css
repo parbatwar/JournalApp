@@ -1,29 +1,31 @@
 ﻿:root {
     --primary-plum: #341539;
-    --md-surface: #fdf8fd; 
-    --md-outline: #e1bee7; 
+    --md-surface: #fdf8fd;
+    --md-outline: #e1bee7;
     --md-primary-container: #f3e5f5;
 }
 
-
-.page-header h1 {
-    font-size: 2.2rem;
-    font-weight: 500;
-    color: var(--primary-plum);
-    font-family: 'Google Sans', 'Inter', sans-serif;
-    margin-bottom: 8px;
+.page-header {
+    margin-bottom: 2rem;
 }
+
+    .page-header h1 {
+        font-size: 2.2rem;
+        font-weight: 500;
+        color: var(--primary-plum);
+        font-family: 'Google Sans', 'Inter', sans-serif;
+        margin-bottom: 8px;
+    }
 
 .filter-wrapper {
     width: 100%;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .filter-container {
     display: flex;
     align-items: center;
     background: #ffffff;
-    /* Lighter plum border & thinner weight */
     border: 1px solid rgba(52, 21, 57, 0.2);
     border-radius: 14px;
     padding: 6px 6px 6px 16px;
@@ -31,21 +33,15 @@
     transition: all 0.2s ease;
 }
 
-    /* Subtle glow on focus */
-    .filter-container:focus-within {
-        border-color: #8e44ad;
-        box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
-    }
-
 .filter-item {
     display: flex;
     align-items: center;
 }
 
 .search-icon {
-    color: #8e44ad; /* Softer purple icon */
-    margin-right: 12px;
-    font-size: 0.9rem;
+    color: #341539;
+    margin-right: 10px;
+    font-size: 1rem;
 }
 
 .clean-input, .clean-select, .clean-date {
@@ -54,21 +50,20 @@
     outline: none !important;
     font-size: 0.88rem;
     color: #341539;
+    width: 100%;
 }
 
-/* Vertical Divider - Very light */
 .v-divider {
     width: 1px;
     height: 20px;
     background: rgba(52, 21, 57, 0.1);
 }
 
-/* Date Range Styling Fix */
 .date-range-box {
     display: flex;
     align-items: center;
-    background: #f8f5f9; /* Light tinted background for dates */
-    padding: 4px 12px;
+    background: #f7eff7;
+    padding: 10px 12px;
     border-radius: 8px;
     gap: 8px;
 }
@@ -80,16 +75,15 @@
 }
 
 .clean-date {
-    width: 125px; /* Fixed width for alignment */
+    width: 124px;
     cursor: pointer;
 }
 
-/* PDF Button - Minimalist Style */
 .pdf-btn {
-    background: #fdf2f9;
+    background: #f7eff7;
     color: #ff00cc;
     border: 1px solid rgba(255, 0, 204, 0.1);
-    height: 38px;
+    height: 40px;
     width: 38px;
     border-radius: 10px;
     display: flex;
@@ -100,7 +94,7 @@
 }
 
     .pdf-btn:hover {
-        background: #ff00cc;
+        background: #341539;
         color: white;
         transform: translateY(-1px);
     }
@@ -115,24 +109,6 @@
     font-weight: 500;
 }
 
-/* Dark Mode Fixes */
-[data-bs-theme="dark"] .filter-container {
-    background: #1e1221;
-    border-color: rgba(223, 115, 255, 0.2);
-}
-
-[data-bs-theme="dark"] .date-range-box {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-[data-bs-theme="dark"] .clean-input,
-[data-bs-theme="dark"] .clean-select,
-[data-bs-theme="dark"] .clean-date {
-    color: #f3e5f5;
-}
-
-
-/* The Main Container (Google "Surface" Card) */
 .card.premium-card {
     background: white;
     border: none;
@@ -141,7 +117,6 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
 }
 
-/* Table - Clean & Row Focused */
 .table thead th {
     background-color: var(--md-surface);
     color: var(--primary-plum);
@@ -157,17 +132,12 @@
     border-bottom: 1px solid #f1f1f1;
 }
 
-    /* Hover Effect with the Plum Border you asked for */
     .table tbody tr:hover {
-        background-color: var(--md-primary-container) !important;
-        outline: 2px solid var(--primary-plum); /* Purple border on hover */
-        outline-offset: -2px;
         cursor: pointer;
     }
 
-/* Badge Style */
 .mood-badge {
-    background: white;
+    background: #f7eff7;
     border: 1px solid var(--md-outline);
     color: var(--primary-plum);
     padding: 4px 12px;
@@ -175,96 +145,87 @@
     font-size: 0.85rem;
 }
 
-/* FAB Style Export Button */
-.btn-export {
-    background: var(--primary-plum);
-    color: white;
-    border-radius: 16px;
-    height: 48px;
-    width: 48px;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+.pagination {
+    gap: 6px;
 }
 
-    .btn-export:hover {
-        background: #4a1e51;
-        transform: scale(1.05);
-    }
-
-.filter-section {
-    padding: 10px 0 30px 0;
-}
-.filter-bar {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 2px solid var(--primary-plum); /* Sharp Plum Border */
-    border-radius: 100px;
-    padding: 6px 6px 6px 24px;
-    box-shadow: 0 8px 20px rgba(52, 21, 57, 0.1);
-    min-height: 60px;
-}
-
-/* Grouping Styles */
-.search-wrapper { flex: 1.5; display: flex; align-items: center; gap: 10px; }
-.dropdown-group { flex: 2; display: flex; align-items: center; gap: 10px; }
-.date-group { flex: 2; display: flex; align-items: center; gap: 15px; padding-right: 15px; }
-
-/* Dividers */
-.divider { width: 1px; height: 30px; background: #e1bee7; margin: 0 15px; }
-.inner-divider { width: 1px; height: 20px; background: #f3e5f5; }
-
-/* Date Styling */
-.date-input-wrapper { display: flex; flex-direction: column; }
-.date-label { 
-    font-size: 0.65rem; 
-    font-weight: 800; 
-    color: var(--primary-plum); 
-    margin-bottom: -4px;
-    letter-spacing: 0.5px;
-}
-.date-sep { width: 10px; height: 2px; background: #e1bee7; margin-top: 10px; }
-
-/* Input Reset */
-.minimal-input, .minimal-select, .minimal-date {
-    border: none !important;
-    background: transparent !important;
-    color: var(--primary-plum);
-    font-size: 0.9rem;
+.page-link {
+    min-width: 90px;
+    text-align: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+    background: transparent;
     font-weight: 500;
-    outline: none;
 }
 
-/* The Action Button */
-.fab-export {
-    background: var(--primary-plum);
-    color: white;
-    border: none;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(52, 21, 57, 0.2);
+.page-item.active .page-link {
+    background: transparent;
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-border-color);
 }
 
-    .fab-export:hover {
-        transform: scale(1.1) rotate(5deg);
-        background: #5a2b63;
+/* --- DARK MODE  --- */
+[data-bs-theme="dark"] {
+    --primary-plum: #ffffff; /* White text headers */
+    --md-surface: #212529; /* Dark Gray surface */
+    --md-outline: #495057; /* Medium Gray border */
+}
+
+    [data-bs-theme="dark"] .filter-container {
+        background: #121212; /* Black */
+        border-color: #495057;
     }
 
-/* Dark Mode Alignment */
-[data-bs-theme="dark"] .filter-bar {
-    background: #1a0b1d;
-    border-color: #df73ff;
-}
-[data-bs-theme="dark"] .minimal-date,
-[data-bs-theme="dark"] .minimal-select,
-[data-bs-theme="dark"] .minimal-input {
-    color: #f3e5f5;
-}
+    [data-bs-theme="dark"] .clean-input,
+    [data-bs-theme="dark"] .clean-select,
+    [data-bs-theme="dark"] .clean-date,
+    [data-bs-theme="dark"] .search-icon,
+    [data-bs-theme="dark"] .date-arrow {
+        color: #f8f9fa; /* Off-white text */
+    }
+
+    [data-bs-theme="dark"] .clean-date {
+        color-scheme: dark;
+    }
+
+    [data-bs-theme="dark"] .v-divider {
+        background: #495057;
+    }
+
+    [data-bs-theme="dark"] .date-range-box {
+        background: #2b3035; /* Neutral Dark Gray */
+    }
+
+    [data-bs-theme="dark"] .pdf-btn {
+        background: #2b3035;
+        color: #ffffff;
+        border-color: #495057;
+    }
+
+        [data-bs-theme="dark"] .pdf-btn:hover {
+            background: #ffffff;
+            color: #121212;
+        }
+
+    [data-bs-theme="dark"] .card.premium-card {
+        background: #121212;
+        border: 1px solid #343a40;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    [data-bs-theme="dark"] .table thead th {
+        color: #ffffff;
+        border-bottom-color: #495057;
+    }
+
+    [data-bs-theme="dark"] .table tbody tr {
+        border-bottom-color: #2b3035;
+        color: #dee2e6; /* Light Gray text */
+    }
+
+    [data-bs-theme="dark"] .mood-badge {
+        background: #2b3035;
+        color: #ffffff;
+    }

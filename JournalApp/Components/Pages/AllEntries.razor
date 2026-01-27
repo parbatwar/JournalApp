@@ -76,16 +76,24 @@
                 @foreach (var entry in PagedEntries)
                 {
                     <tr @onclick="() => OpenEntry(entry.JournalId)">
-                        <td class="text-muted">@i.ToString("D2")</td>
-                        <td class="fw-bold text-dark">@entry.Title</td>
+                        @* Simple 1, 2, 3 banauna @i matrai rakhne *@
+                        <td class="text-body-secondary">@i</td>
+
+                        @* text-dark hataera entry-title thapiyo *@
+                        <td class="fw-bold entry-title">@entry.Title</td>
+
                         <td>
                             @foreach (var m in entry.EntryMoods)
                             {
                                 <span class="mood-badge me-1">@m.Mood?.MoodName</span>
                             }
                         </td>
-                        <td><span class="text-muted">@entry.Tag?.TagName</span></td>
-                        <td class="text-muted">@entry.EntryDate.ToString("MMM dd, yyyy")</td>
+
+                        <td style="padding-left: 18px;">
+                            <span class="text-body-secondary">@entry.Tag?.TagName</span>
+                        </td>
+
+                        <td class="text-body-secondary">@entry.EntryDate.ToString("MMM dd, yyyy")</td>
                     </tr>
                     i++;
                 }
@@ -105,6 +113,36 @@
         </ul>
     </nav>
 </div>
+
+
+@* For exporting table layout *@
+<div id="full-export-table" style="display: none; padding: 30px;">
+    <h2 style="text-align: center; margin-bottom: 20px;">Journal Entries List</h2>
+    <table style="width: 100%; border-collapse: collapse; font-family: sans-serif;">
+        <thead>
+            <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                <th style="padding: 10px; text-align: left;">Date</th>
+                <th style="padding: 10px; text-align: left;">Title</th>
+                <th style="padding: 10px; text-align: left;">Moods</th>
+                <th style="padding: 10px; text-align: left;">Category</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in FilteredEntries) @* Yesle pagination bina ko sabai filtered data lincha *@
+            {
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;">@entry.EntryDate.ToString("MMM dd, yyyy")</td>
+                    <td style="padding: 10px; font-weight: bold;">@entry.Title</td>
+                    <td style="padding: 10px;">
+                        @string.Join(", ", entry.EntryMoods.Select(m => m.Mood?.MoodName))
+                    </td>
+                    <td style="padding: 10px;">@entry.Tag?.TagName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
 
 @code {
 
@@ -217,9 +255,28 @@
         Nav.NavigateTo($"/entry/{id}");
     }
 
+
     async Task ExportToPdf()
     {
-        await JS.InvokeVoidAsync("generatePDF", "Journal_Export");
+        try
+        {
+            await JS.InvokeVoidAsync("generatePDF", "Journal_Export");
+
+            await ShowAlert("Export Success", "Journal entries have been successfully exported to PDF.");
+        }
+        catch (Exception ex)
+        {
+            await ShowAlert("Error", "Failed to export PDF: " + ex.Message);
+        }
+    }
+
+    async Task ShowAlert(string title, string message)
+    {
+        var page = Application.Current!.Windows[0].Page;
+        if (page != null)
+        {
+            await page.DisplayAlertAsync(title, message, "OK");
+        }
     }
 }
 

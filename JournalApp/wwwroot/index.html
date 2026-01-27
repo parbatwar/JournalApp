@@ -20,23 +20,24 @@
 
     <script>
         window.generatePDF = (filename) => {
-            const element = document.getElementById('pdf-export-container');
+            const element = document.getElementById('full-export-table');
 
-            // Show the hidden container briefly for the capture
+            if (!element) {
+                console.error("Export table bhetiyena!");
+                return;
+            }
+
             element.style.display = 'block';
 
             const opt = {
-                margin: 0.5,
+                margin: 10,
                 filename: filename + '.pdf',
-                image: { type: 'png' },
-                html2canvas: { scale: 3, useCORS: true },
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-
             };
 
-            // New html2pdf usage
             html2pdf().set(opt).from(element).save().then(() => {
-                // Hide it again
                 element.style.display = 'none';
             });
         }

@@ -1,31 +1,20 @@
 ﻿:root {
     --primary-plum: #341539;
-    --soft-violet: #8e44ad;
-    --bright-pink: #ff00cc;
-    --glass-white: rgba(255, 255, 255, 0.85);
-}
-
-body {
-    background: linear-gradient(45deg, #f3e5f5 0%, #e1bee7 50%, #d1c4e9 100%);
-    background-attachment: fixed;
-    font-family: 'Poppins', sans-serif;
-    color: var(--primary-plum);
-    padding: 40px 20px;
+    --md-surface: #fdf8fd;
+    --md-outline: #e1bee7;
+    --md-primary-container: #f3e5f5;
 }
 
 .page-header {
-    padding-bottom: 2rem;
+    margin-bottom: 2rem;
 }
 
     .page-header h1 {
-        font-size: 1.7rem;
-        font-weight: 600;
-        color: var(--bs-body-color);
-    }
-
-    .page-header p {
-        color: var(--bs-secondary-color);
-        font-size: .95rem;
+        font-size: 2.2rem;
+        font-weight: 500;
+        color: var(--primary-plum);
+        font-family: 'Google Sans', 'Inter', sans-serif;
+        margin-bottom: 8px;
     }
 
 
