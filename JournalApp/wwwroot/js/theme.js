@@ -1,4 +1,4 @@
-window.toggleTheme = function () {
+﻿window.toggleTheme = function () {
     const body = document.body;
 
     const current = body.getAttribute("data-bs-theme") || "light";

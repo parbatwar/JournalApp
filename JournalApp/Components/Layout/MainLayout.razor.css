@@ -1,25 +1,33 @@
-/* ---------- APP SHELL ---------- */
+:root {
+    --primary-plum: #341539;
+    --soft-violet: #8e44ad;
+    --bright-pink: #ff00cc;
+    --glass-white: rgba(255, 255, 255, 0.85);
+}
+
+body {
+    background: linear-gradient(45deg, #f3e5f5 0%, #e1bee7 50%, #d1c4e9 100%);
+    background-attachment: fixed;
+    font-family: 'Poppins', sans-serif;
+    color: var(--primary-plum);
+    padding: 40px 20px;
+}
+
 .app-shell {
     display: flex;
     height: 100vh;
     background-color: var(--bs-body-bg);
 }
 
-/* ---------- SIDEBAR ---------- */
 .app-sidebar {
     width: 260px;
     flex-shrink: 0;
     padding: 1rem;
-    background: linear-gradient( 180deg, #2a0f3c 0%, #4b1d63 45%, #7a2d6c 75%, #b04478 100% );
+    background: #341539;
     color: #fff;
 }
 
-/* Dark mode gradient */
-[data-bs-theme="dark"] .app-sidebar {
-    background: linear-gradient( 180deg, #12081a 0%, #1e0f2e 45%, #2a163d 75%, #3a1d4d 100% );
-}
 
-/* ---------- MAIN AREA ---------- */
 .app-main {
     flex: 1;
     display: flex;
@@ -27,9 +35,9 @@
     overflow: hidden;
 }
 
-/* ---------- TOP BAR ---------- */
+
 .app-topbar {
-    height: 3.25rem;
+    height: 4.4rem;
     padding: 0 1.25rem;
     display: flex;
     align-items: center;
@@ -38,7 +46,7 @@
     background-color: var(--bs-body-bg);
 }
 
-/* ---------- CONTENT (WRITING CANVAS) ---------- */
+
 .app-content {
     flex: 1;
     overflow-y: auto;
@@ -46,7 +54,7 @@
     background-color: var(--bs-body-bg);
 }
 
-    /* Paper-like center column */
+
     .app-content > * {
         max-width: 760px;
         margin: 0 auto;
