@@ -90,3 +90,66 @@
         background: #ff7675;
         color: #fff;
     }
+
+
+/* DARK MODE */
+
+[data-bs-theme="dark"] .page-header h1 {
+    color: #f1f1f1; 
+}
+
+[data-bs-theme="dark"] .btn-back {
+    border-color: #3a3a3a;
+    color: #e5e5e5;
+}
+
+    [data-bs-theme="dark"] .btn-back:hover {
+        background: #2a2a2a;
+    }
+
+[data-bs-theme="dark"] .premium-view-card {
+    background: #1e1e1e; 
+}
+
+[data-bs-theme="dark"] .entry-display-title {
+    color: #f5f5f5;
+}
+
+[data-bs-theme="dark"] .date-badge {
+    background: #2a2a2a;
+    color: #cfcfcf;
+}
+
+[data-bs-theme="dark"] .mood-pill,
+[data-bs-theme="dark"] .tag-pill {
+    background: #2f2f2f;
+    color: #e0e0e0;
+}
+
+[data-bs-theme="dark"] .entry-content-box {
+    color: #d6d6d6;
+}
+
+
+[data-bs-theme="dark"] .card-footer.bg-white {
+    background-color: #1e1e1e !important; 
+    color: #f1f1f1;
+    border-top: 1px solid #2a2a2a;
+}
+
+
+[data-bs-theme="dark"] .card-footer .btn-edit {
+    background: #2a2a2a;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .card-footer .btn-delete {
+    background: #2a1f1f;
+    color: #ffb4b4;
+}
+
+
+    [data-bs-theme="dark"] .btn-delete:hover {
+        background: #ff7675;
+        color: #000;
+    }

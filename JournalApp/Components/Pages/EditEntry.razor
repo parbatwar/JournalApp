@@ -15,7 +15,7 @@
 
 <div class="content-card mb-4">
 
-    <!-- Entry Date (TOP) -->
+    <!-- Entry Date -->
     <div class="mb-4">
         <label class="form-label">Entry Date</label>
         <p class="form-control-plaintext fw-semibold">
@@ -46,7 +46,7 @@
             @foreach (var mood in moods)
             {
                 <button type="button"
-                        class="btn @(primaryMoodId == mood.MoodId ? "btn-dark" : "btn-outline-dark")"
+                        class="btn @(primaryMoodId == mood.MoodId ? "btn-primary" : "btn-outline-secondary")"
                         @onclick="() => primaryMoodId = mood.MoodId">
                     @mood.MoodName
                 </button>
@@ -109,8 +109,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        JournalEntry journalEntry = await EntryService.GetEntryById(EntryId);
+        JournalEntry? journalEntry = await EntryService.GetEntryById(EntryId);
+
+        if (journalEntry == null)
+        {
+            Nav.NavigateTo("/all-entries");
+            return;
+        }
+
         Entry = journalEntry;
+
 
         if (Entry == null)
         {
