@@ -1,6 +1,6 @@
 ﻿.register-bg {
     min-height: 100vh;
-    background: linear-gradient(180deg,#2a0f3c,#4b1d63,#7a2d6c,#b04478);
+    background: linear-gradient(135deg, #2a0f3c, #341539, #4b1d63, #7a2d6c);
     display: flex;
     align-items: center;
     justify-content: center;
