@@ -126,7 +126,7 @@
 
     async Task SaveEntry()
     {
-        // ❗ one entry per day rule
+        // one entry per day rule
         var existingEntryId =
             await EntryService.GetEntryIdByDate(DateTime.UtcNow.Date);
 

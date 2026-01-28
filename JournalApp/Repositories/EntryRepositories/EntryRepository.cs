@@ -12,6 +12,7 @@ public class EntryRepository : IEntryRepository
         _db = db; // DbContext inject
     }
 
+    // Add Entry
     public async Task AddEntry(
         JournalEntry entry,
         int userId,
@@ -50,6 +51,7 @@ public class EntryRepository : IEntryRepository
         await _db.SaveChangesAsync();
     }
 
+    // Update Entry
     public async Task UpdateEntry(
         JournalEntry entry,
         int primaryMoodId,
@@ -89,6 +91,7 @@ public class EntryRepository : IEntryRepository
         await _db.SaveChangesAsync();
     }
 
+    // Delete Entry
     public async Task DeleteEntry(int entryId)
     {
         var entry = await _db.Entries
@@ -98,6 +101,8 @@ public class EntryRepository : IEntryRepository
         await _db.SaveChangesAsync();
     }
 
+
+    // Get all journal entries
     public Task<List<JournalEntry>> GetEntries()
         => _db.Entries
             .Include(e => e.EntryMoods)
@@ -106,6 +111,8 @@ public class EntryRepository : IEntryRepository
             .OrderByDescending(e => e.EntryDate)
             .ToListAsync();
 
+
+    // Get single journal entry by its ID
     public Task<JournalEntry?> GetEntryById(int entryId)
         => _db.Entries
             .Include(e => e.EntryMoods)
@@ -113,15 +120,19 @@ public class EntryRepository : IEntryRepository
             .Include(e => e.Tag)
             .FirstOrDefaultAsync(e => e.JournalId == entryId);
 
+
+    //Get journal entry ID for a specific date
     public Task<int?> GetEntryIdByDate(DateTime date)
         => _db.Entries
             .Where(e => e.EntryDate == date.Date)
             .Select(e => (int?)e.JournalId)
             .FirstOrDefaultAsync();
 
+    //Get all available moods
     public Task<List<Mood>> GetMoods()
         => _db.Moods.AsNoTracking().ToListAsync();
 
+    // Get predefined tags
     public Task<List<Tag>> GetTags()
         => _db.Tags
             .Where(t => t.TagType == TagTypeEnum.Predefined)

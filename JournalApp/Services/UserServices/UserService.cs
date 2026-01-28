@@ -5,6 +5,7 @@ namespace JournalApp.Services.UserService;
 
 public class UserService : IUserService
 {
+    // Readonly ensures it cannot be reassigned after initialization
     private readonly IUserRepository _repo;
 
     public UserService(IUserRepository repo)
@@ -12,19 +13,33 @@ public class UserService : IUserService
         _repo = repo;
     }
 
+    // Login logic
     public bool Login(UserDto dto)
     {
-        var user = _repo.GetUser();
+        try
+        {
+            // DTO validation already ensures Username & Password are not empty
+            var user = _repo.GetUser();
 
-        if (user == null)
+            //if user does not exist
+            if (user == null)
+                return false;
+
+            // Credential check
+            return user.Username == dto.Username
+                && user.Password == dto.Password;
+        }
+        catch (Exception)
+        {
+            // Prevent application crash
             return false;
-
-        return user.Username == dto.Username
-            && user.Password == dto.Password;
+        }
     }
 
+    // Signup logic
     public void SignUp(UserDto dto)
     {
+        // Business validation: prevent duplicate user
         if (_repo.UserExists())
             throw new Exception("User already exists");
 

@@ -76,10 +76,8 @@
                 @foreach (var entry in PagedEntries)
                 {
                     <tr @onclick="() => OpenEntry(entry.JournalId)">
-                        @* Simple 1, 2, 3 banauna @i matrai rakhne *@
                         <td class="text-body-secondary">@i</td>
 
-                        @* text-dark hataera entry-title thapiyo *@
                         <td class="fw-bold entry-title">@entry.Title</td>
 
                         <td>
