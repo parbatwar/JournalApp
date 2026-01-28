@@ -2,7 +2,7 @@
 
 public class EntryDto
 {
-    public int? JournalId { get; set; }   // update ko lagi
+    public int? JournalId { get; set; }
     public string Title { get; set; } = "";
     public string Content { get; set; } = "";
     public DateTime EntryDate { get; set; }
